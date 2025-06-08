@@ -48,23 +48,23 @@ const SensorTechnicalData = () => {
 
   return (
     <Card className="fun-shadow">
-      <CardHeader className="pb-4">
-        <CardTitle className="text-paleo-pink-dark flex items-center gap-2">
+      <CardHeader className="pb-3 sm:pb-4">
+        <CardTitle className="text-paleo-pink-dark flex items-center gap-2 text-lg sm:text-xl">
           🤓 Nerd Box - Sensor Stats
         </CardTitle>
-        <CardDescription>
+        <CardDescription className="text-sm">
           For our tech-loving chocolate makers! 📡
         </CardDescription>
       </CardHeader>
-      <CardContent className="pt-0">
-        <div className="grid grid-cols-1 gap-3 h-56">
+      <CardContent className="pt-0 p-3 sm:p-6 sm:pt-0">
+        <div className="grid grid-cols-1 gap-3 h-48 sm:h-56">
           {/* RSSI Box */}
           <div className="bg-gradient-to-r from-paleo-purple/10 to-paleo-pink/10 p-3 rounded-lg border border-paleo-purple/20">
             <div className="flex items-center gap-3">
-              <Wifi className="w-5 h-5 text-paleo-purple" />
-              <div>
+              <Wifi className="w-4 h-4 sm:w-5 sm:h-5 text-paleo-purple flex-shrink-0" />
+              <div className="min-w-0 flex-1">
                 <div className="text-xs font-medium text-paleo-purple">RSSI (Signal Strength)</div>
-                <div className="text-xl font-bold text-paleo-pink-dark">
+                <div className="text-lg sm:text-xl font-bold text-paleo-pink-dark">
                   {isLoading ? "..." : `${sensorData.rssi} dBm`}
                 </div>
                 <div className="text-xs text-paleo-purple opacity-75">
@@ -77,10 +77,10 @@ const SensorTechnicalData = () => {
           {/* SNR Box */}
           <div className="bg-gradient-to-r from-paleo-pink/10 to-paleo-success/10 p-3 rounded-lg border border-paleo-pink/20">
             <div className="flex items-center gap-3">
-              <Signal className="w-5 h-5 text-paleo-pink" />
-              <div>
+              <Signal className="w-4 h-4 sm:w-5 sm:h-5 text-paleo-pink flex-shrink-0" />
+              <div className="min-w-0 flex-1">
                 <div className="text-xs font-medium text-paleo-purple">SNR (Signal Quality)</div>
-                <div className="text-xl font-bold text-paleo-pink-dark">
+                <div className="text-lg sm:text-xl font-bold text-paleo-pink-dark">
                   {isLoading ? "..." : `${sensorData.snr} dB`}
                 </div>
                 <div className="text-xs text-paleo-purple opacity-75">
@@ -93,10 +93,10 @@ const SensorTechnicalData = () => {
           {/* Total Packets Box */}
           <div className="bg-gradient-to-r from-paleo-success/10 to-paleo-warning/10 p-3 rounded-lg border border-paleo-success/20">
             <div className="flex items-center gap-3">
-              <Database className="w-5 h-5 text-paleo-success" />
-              <div>
+              <Database className="w-4 h-4 sm:w-5 sm:h-5 text-paleo-success flex-shrink-0" />
+              <div className="min-w-0 flex-1">
                 <div className="text-xs font-medium text-paleo-purple">Total Uplinks Received</div>
-                <div className="text-xl font-bold text-paleo-pink-dark">
+                <div className="text-lg sm:text-xl font-bold text-paleo-pink-dark">
                   {isLoading ? "..." : sensorData.totalPackets.toLocaleString()}
                 </div>
                 <div className="text-xs text-paleo-purple opacity-75">

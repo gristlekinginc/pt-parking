@@ -121,18 +121,43 @@ export default {
           ORDER BY id DESC LIMIT 1
         `).first();
 
-        // Calculate availability percentage (mock for now since we don't have enough data)
+        // Calculate availability for next hour based on historical data
+        const now = new Date();
+        const currentHour = now.getHours();
+        const currentDayOfWeek = now.getDay(); // 0 = Sunday, 1 = Monday, etc.
+        
+        // Look at historical data for this same hour and day of week
+        const historicalData = await env.DB.prepare(`
+          SELECT status FROM parking_status_log 
+          WHERE strftime('%H', timestamp) = ? 
+          AND strftime('%w', timestamp) = ?
+          AND timestamp > date('now', '-4 weeks')
+        `).bind(
+          currentHour.toString().padStart(2, '0'),
+          currentDayOfWeek.toString()
+        ).all();
+
+        let availabilityNextHour = 75; // Default prediction if no historical data
+        
+        if (historicalData.results && historicalData.results.length > 0) {
+          const freeCount = historicalData.results.filter(row => row.status === 'FREE').length;
+          const totalCount = historicalData.results.length;
+          availabilityNextHour = Math.round((freeCount / totalCount) * 100);
+        }
+
+        // Calculate current availability percentage for comparison
         const totalRecords = await env.DB.prepare("SELECT COUNT(*) as count FROM parking_status_log WHERE timestamp > date('now', '-7 days')").first();
         const occupiedRecords = await env.DB.prepare("SELECT COUNT(*) as count FROM parking_status_log WHERE status = 'OCCUPIED' AND timestamp > date('now', '-7 days')").first();
         
-        const availabilityPercent = totalRecords?.count > 0 
+        const currentAvailabilityPercent = totalRecords?.count > 0 
           ? Math.round(((totalRecords.count - occupiedRecords?.count || 0) / totalRecords.count) * 100)
           : 60; // Default fallback
 
         const stats = {
           monthlyHours: Math.round(monthlyHours?.hours || 0),
           peakUsage: 88, // This would need more complex calculation
-          availability: availabilityPercent,
+          availability: currentAvailabilityPercent, // Keep for backward compatibility
+          availabilityNextHour: availabilityNextHour, // New predictive field
           totalPackets: totalPackets?.count || 0,
           rssi: latestTechnical?.rssi || -67,
           snr: latestTechnical?.snr || 8.5
@@ -212,20 +237,264 @@ export default {
 
     if (request.method === "GET" && url.pathname === "/analytics/weekly") {
       try {
-        // This would need more sophisticated analysis, for now return default pattern
-        const weeklyData = [
-          { day: 'Mon', usage: 65 },
-          { day: 'Tue', usage: 78 },
-          { day: 'Wed', usage: 82 },
-          { day: 'Thu', usage: 88 },
-          { day: 'Fri', usage: 95 },
-          { day: 'Sat', usage: 45 },
-          { day: 'Sun', usage: 35 },
-        ];
+        // Check if we have at least 2 weeks of data for accurate heatmap
+        const twoWeeksAgo = await env.DB.prepare(`
+          SELECT COUNT(*) as count FROM parking_status_log 
+          WHERE timestamp > date('now', '-14 days')
+        `).first();
 
-        return Response.json(weeklyData, { headers: corsHeaders });
+        const hasEnoughData = twoWeeksAgo && twoWeeksAgo.count >= 20;
+
+        interface HeatmapCell {
+          day: string;
+          dayIndex: number;
+          hour: number;
+          hourLabel: string;
+          occupancyRate: number;
+          availabilityRate: number;
+        }
+
+        if (!hasEnoughData) {
+          // Use owner working schedule as intelligent defaults
+          // Monday 10am-6pm, Tues/Wed 2pm-6pm, Thursday 10am-6pm, Friday 2pm-3pm
+          const defaultHeatmap: HeatmapCell[] = [];
+          const days = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+          
+          for (let dayIndex = 0; dayIndex < 7; dayIndex++) {
+            for (let hour = 8; hour <= 20; hour++) { // 8am to 8pm
+              let occupancyRate = 5; // Default low occupancy
+              
+              // Apply owner working schedule
+              if (dayIndex === 1) { // Monday: 10am-6pm
+                occupancyRate = (hour >= 10 && hour <= 18) ? 95 : 5;
+              } else if (dayIndex === 2 || dayIndex === 3) { // Tuesday/Wednesday: 2pm-6pm
+                occupancyRate = (hour >= 14 && hour <= 18) ? 95 : 5;
+              } else if (dayIndex === 4) { // Thursday: 10am-6pm
+                occupancyRate = (hour >= 10 && hour <= 18) ? 95 : 5;
+              } else if (dayIndex === 5) { // Friday: 2pm-3pm
+                occupancyRate = (hour >= 14 && hour <= 15) ? 95 : 5;
+              }
+              
+              defaultHeatmap.push({
+                day: days[dayIndex],
+                dayIndex: dayIndex,
+                hour: hour,
+                hourLabel: hour === 12 ? '12PM' : hour > 12 ? `${hour-12}PM` : `${hour}AM`,
+                occupancyRate: occupancyRate,
+                availabilityRate: 100 - occupancyRate
+              });
+            }
+          }
+
+          return Response.json(defaultHeatmap, { headers: corsHeaders });
+        }
+
+        // Calculate real heatmap data from historical data
+        const heatmapData: HeatmapCell[] = [];
+        const days = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+        
+        for (let dayIndex = 0; dayIndex < 7; dayIndex++) {
+          for (let hour = 8; hour <= 20; hour++) { // 8am to 8pm
+            // Get historical data for this specific hour and day combination
+            const historicalData = await env.DB.prepare(`
+              SELECT status FROM parking_status_log 
+              WHERE CAST(strftime('%H', timestamp) AS INTEGER) = ?
+              AND strftime('%w', timestamp) = ?
+              AND timestamp > date('now', '-4 weeks')
+            `).bind(hour, dayIndex.toString()).all();
+
+            let occupancyRate = 15; // Default if no data
+            
+            if (historicalData.results && historicalData.results.length > 0) {
+              const occupiedCount = historicalData.results.filter((row: any) => row.status === 'OCCUPIED').length;
+              const totalCount = historicalData.results.length;
+              occupancyRate = Math.round((occupiedCount / totalCount) * 100);
+            }
+
+            heatmapData.push({
+              day: days[dayIndex],
+              dayIndex: dayIndex,
+              hour: hour,
+              hourLabel: hour === 12 ? '12PM' : hour > 12 ? `${hour-12}PM` : `${hour}AM`,
+              occupancyRate: occupancyRate,
+              availabilityRate: 100 - occupancyRate
+            });
+          }
+        }
+
+        return Response.json(heatmapData, { headers: corsHeaders });
       } catch (err) {
         return new Response("Error fetching weekly data: " + err.toString(), { 
+          status: 500, 
+          headers: corsHeaders 
+        });
+      }
+    }
+
+    if (request.method === "GET" && url.pathname === "/analytics/best-times") {
+      try {
+        // Check if we have at least 2 weeks of data to make accurate recommendations
+        const twoWeeksAgo = await env.DB.prepare(`
+          SELECT COUNT(*) as count FROM parking_status_log 
+          WHERE timestamp > date('now', '-14 days')
+        `).first();
+
+        const hasEnoughData = twoWeeksAgo && twoWeeksAgo.count >= 20; // Lowered from 50 to 20 data points
+
+        if (!hasEnoughData) {
+          // Use business owner knowledge as intelligent defaults
+          // Peak times reflect when owners park (not customer traffic)
+          return Response.json({
+            bestTimes: [
+              {
+                day: 'Tuesday',
+                dayIndex: 2,
+                startHour: 10,
+                endHour: 12,
+                timeSlot: '10AM-12PM',
+                occupancyRate: 10,
+                availabilityRate: 90
+              },
+              {
+                day: 'Saturday',
+                dayIndex: 6,
+                startHour: 11,
+                endHour: 13,
+                timeSlot: '11AM-1PM',
+                occupancyRate: 15,
+                availabilityRate: 85
+              }
+            ],
+            peakTime: {
+              day: 'Monday',
+              dayIndex: 1,
+              startHour: 10,
+              endHour: 18,
+              timeSlot: '10AM-6PM',
+              occupancyRate: 95,
+              availabilityRate: 5
+            },
+            dailyTurnover: 2.5 // Default estimate: spot fills ~2-3 times per day
+          }, { headers: corsHeaders });
+        }
+
+        // Calculate daily turnover (how many times spot gets filled per day)
+        const dailyTurnoverData = await env.DB.prepare(`
+          SELECT 
+            DATE(timestamp) as date,
+            COUNT(*) as changes
+          FROM parking_status_log 
+          WHERE status_changed = 1 
+          AND status = 'OCCUPIED'
+          AND timestamp > date('now', '-14 days')
+          GROUP BY DATE(timestamp)
+        `).all();
+
+        let avgDailyTurnover = 2.5; // Default
+        if (dailyTurnoverData.results && dailyTurnoverData.results.length > 0) {
+          const totalChanges = dailyTurnoverData.results.reduce((sum: number, row: any) => sum + row.changes, 0);
+          const totalDays = dailyTurnoverData.results.length;
+          avgDailyTurnover = Math.round((totalChanges / totalDays) * 10) / 10; // Round to 1 decimal
+        }
+
+        // Calculate best times to visit during business hours (10am-6pm) using historical data
+        // Look at historical data for each day/hour combination during business hours
+        const businessHours = ['10', '11', '12', '13', '14', '15', '16', '17']; // 10am-6pm (inclusive)
+        const daysOfWeek = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+        
+        interface TimeSlot {
+          day: string;
+          dayIndex: number;
+          startHour: number;
+          endHour: number;
+          timeSlot: string;
+          occupancyRate: number;
+          availabilityRate: number;
+        }
+        
+        const bestTimes: TimeSlot[] = [];
+        
+        // Check each day of week and each business hour
+        for (let dayIndex = 0; dayIndex < 7; dayIndex++) {
+          for (let i = 0; i < businessHours.length - 1; i++) { // -1 because we want 2-hour slots
+            const startHour = parseInt(businessHours[i]);
+            const endHour = parseInt(businessHours[i + 1]);
+            
+            // Get historical data for this 2-hour time slot on this day of week
+            const historicalData = await env.DB.prepare(`
+              SELECT status FROM parking_status_log 
+              WHERE CAST(strftime('%H', timestamp) AS INTEGER) >= ? 
+              AND CAST(strftime('%H', timestamp) AS INTEGER) < ?
+              AND strftime('%w', timestamp) = ?
+              AND timestamp > date('now', '-4 weeks')
+            `).bind(startHour, endHour, dayIndex.toString()).all();
+
+            let occupancyRate = 50; // Default if no data
+            
+            if (historicalData.results && historicalData.results.length > 0) {
+              const occupiedCount = historicalData.results.filter((row: any) => row.status === 'OCCUPIED').length;
+              const totalCount = historicalData.results.length;
+              occupancyRate = Math.round((occupiedCount / totalCount) * 100);
+            }
+
+            bestTimes.push({
+              day: daysOfWeek[dayIndex],
+              dayIndex: dayIndex,
+              startHour: startHour,
+              endHour: endHour,
+              timeSlot: `${startHour === 12 ? '12' : startHour > 12 ? startHour - 12 : startHour}${startHour >= 12 ? 'PM' : 'AM'}-${endHour === 12 ? '12' : endHour > 12 ? endHour - 12 : endHour}${endHour >= 12 ? 'PM' : 'AM'}`,
+              occupancyRate: occupancyRate,
+              availabilityRate: 100 - occupancyRate
+            });
+          }
+        }
+
+        // Sort by lowest occupancy rate and get top 2 from different days
+        bestTimes.sort((a, b) => a.occupancyRate - b.occupancyRate);
+        
+        const selectedTimes: TimeSlot[] = [];
+        const usedDays = new Set<number>();
+        
+        for (const timeSlot of bestTimes) {
+          if (!usedDays.has(timeSlot.dayIndex) && selectedTimes.length < 2) {
+            selectedTimes.push(timeSlot);
+            usedDays.add(timeSlot.dayIndex);
+          }
+        }
+
+        // If we don't have enough variety, fill with business owner defaults
+        while (selectedTimes.length < 2) {
+          selectedTimes.push({
+            day: selectedTimes.length === 0 ? 'Tuesday' : 'Saturday',
+            dayIndex: selectedTimes.length === 0 ? 2 : 6,
+            startHour: selectedTimes.length === 0 ? 10 : 11,
+            endHour: selectedTimes.length === 0 ? 12 : 13,
+            timeSlot: selectedTimes.length === 0 ? '10AM-12PM' : '11AM-1PM',
+            occupancyRate: selectedTimes.length === 0 ? 10 : 15,
+            availabilityRate: selectedTimes.length === 0 ? 90 : 85
+          });
+        }
+
+        // Calculate peak hours (highest occupancy during business hours)
+        // This will likely reflect owner usage patterns
+        const peakTime = bestTimes[bestTimes.length - 1] || {
+          day: 'Monday',
+          dayIndex: 1,
+          startHour: 10,
+          endHour: 18,
+          timeSlot: '10AM-6PM',
+          occupancyRate: 95,
+          availabilityRate: 5
+        };
+
+        return Response.json({
+          bestTimes: selectedTimes,
+          peakTime: peakTime,
+          dailyTurnover: avgDailyTurnover
+        }, { headers: corsHeaders });
+      } catch (err) {
+        console.error('Error calculating best times:', err);
+        return new Response("Error calculating best times: " + err.toString(), { 
           status: 500, 
           headers: corsHeaders 
         });

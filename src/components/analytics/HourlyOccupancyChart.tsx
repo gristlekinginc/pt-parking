@@ -1,6 +1,6 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { ChartContainer, ChartTooltip, ChartTooltipContent } from "@/components/ui/chart";
-import { AreaChart, Area, XAxis, YAxis } from "recharts";
+import { AreaChart, Area, XAxis, YAxis, ResponsiveContainer } from "recharts";
 import { useState, useEffect } from "react";
 
 interface HourlyData {
@@ -66,25 +66,44 @@ const HourlyOccupancyChart = () => {
           When is our parking spot most popular? 🚗
         </CardDescription>
       </CardHeader>
-      <CardContent>
+      <CardContent className="p-2 sm:p-6">
         {isLoading ? (
-          <div className="h-64 flex items-center justify-center text-paleo-purple">
+          <div className="h-48 sm:h-64 flex items-center justify-center text-paleo-purple">
             Loading chart data...
           </div>
         ) : (
-          <ChartContainer config={chartConfig} className="h-64">
-            <AreaChart data={hourlyOccupancyData}>
-              <XAxis dataKey="hour" />
-              <YAxis />
-              <ChartTooltip content={<ChartTooltipContent />} />
-              <Area 
-                dataKey="occupied" 
-                fill="hsl(var(--paleo-purple))" 
-                stroke="hsl(var(--paleo-pink))" 
-                strokeWidth={3}
-              />
-            </AreaChart>
-          </ChartContainer>
+          <div className="w-full h-48 sm:h-64">
+            <ChartContainer config={chartConfig} className="w-full h-full">
+              <ResponsiveContainer width="100%" height="100%">
+                <AreaChart data={hourlyOccupancyData} margin={{ top: 5, right: 5, left: 5, bottom: 5 }}>
+                  <XAxis 
+                    dataKey="hour" 
+                    fontSize={12}
+                    tickMargin={8}
+                    axisLine={false}
+                    tickLine={false}
+                    interval={0}
+                    angle={-45}
+                    textAnchor="end"
+                    height={60}
+                  />
+                  <YAxis 
+                    fontSize={12}
+                    tickMargin={8}
+                    axisLine={false}
+                    tickLine={false}
+                  />
+                  <ChartTooltip content={<ChartTooltipContent />} />
+                  <Area 
+                    dataKey="occupied" 
+                    fill="hsl(var(--paleo-purple))" 
+                    stroke="hsl(var(--paleo-pink))" 
+                    strokeWidth={3}
+                  />
+                </AreaChart>
+              </ResponsiveContainer>
+            </ChartContainer>
+          </div>
         )}
       </CardContent>
     </Card>

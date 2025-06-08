@@ -1,6 +1,6 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { ChartContainer, ChartTooltip, ChartTooltipContent } from "@/components/ui/chart";
-import { BarChart, Bar, XAxis, YAxis } from "recharts";
+import { BarChart, Bar, XAxis, YAxis, ResponsiveContainer } from "recharts";
 import { useState, useEffect } from "react";
 
 interface MonthlyData {
@@ -63,20 +63,35 @@ const MonthlyHoursChart = () => {
           Total hours our sweet spot has been occupied! 🍫
         </CardDescription>
       </CardHeader>
-      <CardContent>
+      <CardContent className="p-2 sm:p-6">
         {isLoading ? (
-          <div className="h-64 flex items-center justify-center text-paleo-purple">
+          <div className="h-48 sm:h-64 flex items-center justify-center text-paleo-purple">
             Loading chart data...
           </div>
         ) : (
-          <ChartContainer config={chartConfig} className="h-64">
-            <BarChart data={monthlyHoursData}>
-              <XAxis dataKey="month" />
-              <YAxis />
-              <ChartTooltip content={<ChartTooltipContent />} />
-              <Bar dataKey="hours" fill="hsl(var(--paleo-pink))" radius={8} />
-            </BarChart>
-          </ChartContainer>
+          <div className="w-full h-48 sm:h-64">
+            <ChartContainer config={chartConfig} className="w-full h-full">
+              <ResponsiveContainer width="100%" height="100%">
+                <BarChart data={monthlyHoursData} margin={{ top: 5, right: 5, left: 5, bottom: 5 }}>
+                  <XAxis 
+                    dataKey="month" 
+                    fontSize={12}
+                    tickMargin={8}
+                    axisLine={false}
+                    tickLine={false}
+                  />
+                  <YAxis 
+                    fontSize={12}
+                    tickMargin={8}
+                    axisLine={false}
+                    tickLine={false}
+                  />
+                  <ChartTooltip content={<ChartTooltipContent />} />
+                  <Bar dataKey="hours" fill="hsl(var(--paleo-pink))" radius={8} />
+                </BarChart>
+              </ResponsiveContainer>
+            </ChartContainer>
+          </div>
         )}
       </CardContent>
     </Card>
