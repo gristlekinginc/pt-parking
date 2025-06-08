@@ -3,75 +3,78 @@
 @tailwind components;
 @tailwind utilities;
 
-/* Paleo Treats Color Scheme - Natural, warm earth tones */
+/* Paleo Treats Color Scheme - Pink and white with fun vibrancy */
 
 @layer base {
   :root {
-    --background: 45 20% 97%;
-    --foreground: 25 15% 15%;
+    --background: 330 100% 98%;
+    --foreground: 340 15% 20%;
 
     --card: 0 0% 100%;
-    --card-foreground: 25 15% 15%;
+    --card-foreground: 340 15% 20%;
 
     --popover: 0 0% 100%;
-    --popover-foreground: 25 15% 15%;
+    --popover-foreground: 340 15% 20%;
 
-    --primary: 25 85% 45%;
+    --primary: 320 85% 60%;
     --primary-foreground: 0 0% 100%;
 
-    --secondary: 45 25% 90%;
-    --secondary-foreground: 25 15% 15%;
+    --secondary: 330 30% 95%;
+    --secondary-foreground: 340 15% 20%;
 
-    --muted: 45 15% 92%;
-    --muted-foreground: 25 8% 45%;
+    --muted: 330 20% 96%;
+    --muted-foreground: 340 8% 50%;
 
-    --accent: 35 65% 55%;
+    --accent: 310 70% 65%;
     --accent-foreground: 0 0% 100%;
 
     --destructive: 0 84% 60%;
     --destructive-foreground: 210 40% 98%;
 
-    --border: 45 20% 85%;
-    --input: 45 20% 85%;
-    --ring: 25 85% 45%;
+    --border: 330 30% 90%;
+    --input: 330 30% 90%;
+    --ring: 320 85% 60%;
 
-    --radius: 0.75rem;
+    --radius: 1rem;
 
-    --paleo-orange: 25 85% 45%;
-    --paleo-green: 120 60% 35%;
-    --paleo-red: 0 75% 55%;
-    --paleo-brown: 25 35% 25%;
-    --paleo-cream: 45 40% 95%;
+    --paleo-pink: 320 85% 60%;
+    --paleo-pink-light: 325 80% 75%;
+    --paleo-pink-dark: 315 90% 45%;
+    --paleo-purple: 280 70% 65%;
+    --paleo-gradient-start: 320 85% 60%;
+    --paleo-gradient-end: 280 70% 65%;
+    --paleo-success: 145 70% 55%;
+    --paleo-warning: 45 95% 65%;
   }
 
   .dark {
-    --background: 25 15% 8%;
-    --foreground: 45 20% 95%;
+    --background: 340 20% 8%;
+    --foreground: 330 100% 95%;
 
-    --card: 25 15% 10%;
-    --card-foreground: 45 20% 95%;
+    --card: 340 20% 10%;
+    --card-foreground: 330 100% 95%;
 
-    --popover: 25 15% 10%;
-    --popover-foreground: 45 20% 95%;
+    --popover: 340 20% 10%;
+    --popover-foreground: 330 100% 95%;
 
-    --primary: 25 85% 55%;
-    --primary-foreground: 25 15% 8%;
+    --primary: 320 85% 70%;
+    --primary-foreground: 340 20% 8%;
 
-    --secondary: 25 20% 15%;
-    --secondary-foreground: 45 20% 95%;
+    --secondary: 340 20% 15%;
+    --secondary-foreground: 330 100% 95%;
 
-    --muted: 25 15% 12%;
-    --muted-foreground: 45 10% 65%;
+    --muted: 340 15% 12%;
+    --muted-foreground: 330 30% 65%;
 
-    --accent: 35 65% 65%;
-    --accent-foreground: 25 15% 8%;
+    --accent: 310 70% 75%;
+    --accent-foreground: 340 20% 8%;
 
     --destructive: 0 75% 65%;
-    --destructive-foreground: 45 20% 95%;
+    --destructive-foreground: 330 100% 95%;
 
-    --border: 25 20% 18%;
-    --input: 25 20% 18%;
-    --ring: 25 85% 55%;
+    --border: 340 20% 18%;
+    --input: 340 20% 18%;
+    --ring: 320 85% 70%;
   }
 }
 
@@ -88,14 +91,51 @@
 
 @layer utilities {
   .paleo-gradient {
-    background: linear-gradient(135deg, hsl(var(--paleo-orange)) 0%, hsl(var(--accent)) 100%);
+    background: linear-gradient(135deg, hsl(var(--paleo-gradient-start)) 0%, hsl(var(--paleo-gradient-end)) 100%);
+  }
+  
+  .paleo-gradient-fun {
+    background: linear-gradient(45deg, hsl(var(--paleo-pink)) 0%, hsl(var(--paleo-purple)) 50%, hsl(var(--paleo-pink-light)) 100%);
   }
   
   .parking-vacant {
-    background: linear-gradient(135deg, hsl(var(--paleo-green)) 0%, #4ade80 100%);
+    background: linear-gradient(135deg, hsl(var(--paleo-success)) 0%, hsl(145 60% 65%) 100%);
   }
   
   .parking-occupied {
-    background: linear-gradient(135deg, hsl(var(--paleo-red)) 0%, #f87171 100%);
+    background: linear-gradient(135deg, hsl(var(--paleo-warning)) 0%, hsl(25 90% 65%) 100%);
+  }
+
+  .fun-shadow {
+    box-shadow: 0 20px 40px -12px hsl(var(--paleo-pink) / 0.3);
+  }
+
+  .bounce-fun {
+    animation: bounce-fun 2s ease-in-out infinite;
+  }
+
+  @keyframes bounce-fun {
+    0%, 20%, 50%, 80%, 100% {
+      transform: translateY(0);
+    }
+    40% {
+      transform: translateY(-15px);
+    }
+    60% {
+      transform: translateY(-8px);
+    }
+  }
+
+  .pulse-fun {
+    animation: pulse-fun 2s ease-in-out infinite;
+  }
+
+  @keyframes pulse-fun {
+    0%, 100% {
+      transform: scale(1);
+    }
+    50% {
+      transform: scale(1.05);
+    }
   }
 }

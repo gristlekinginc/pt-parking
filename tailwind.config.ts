@@ -54,11 +54,12 @@ export default {
 					foreground: 'hsl(var(--card-foreground))'
 				},
 				paleo: {
-					orange: 'hsl(var(--paleo-orange))',
-					green: 'hsl(var(--paleo-green))',
-					red: 'hsl(var(--paleo-red))',
-					brown: 'hsl(var(--paleo-brown))',
-					cream: 'hsl(var(--paleo-cream))'
+					pink: 'hsl(var(--paleo-pink))',
+					'pink-light': 'hsl(var(--paleo-pink-light))',
+					'pink-dark': 'hsl(var(--paleo-pink-dark))',
+					purple: 'hsl(var(--paleo-purple))',
+					success: 'hsl(var(--paleo-success))',
+					warning: 'hsl(var(--paleo-warning))'
 				}
 			},
 			borderRadius: {
@@ -90,13 +91,23 @@ export default {
 				'bounce-gentle': {
 					'0%, 100%': { transform: 'translateY(0)' },
 					'50%': { transform: 'translateY(-10px)' }
+				},
+				'wiggle': {
+					'0%, 100%': { transform: 'rotate(-3deg)' },
+					'50%': { transform: 'rotate(3deg)' }
+				},
+				'rainbow': {
+					'0%': { filter: 'hue-rotate(0deg)' },
+					'100%': { filter: 'hue-rotate(360deg)' }
 				}
 			},
 			animation: {
 				'accordion-down': 'accordion-down 0.2s ease-out',
 				'accordion-up': 'accordion-up 0.2s ease-out',
 				'pulse-slow': 'pulse-slow 3s ease-in-out infinite',
-				'bounce-gentle': 'bounce-gentle 2s ease-in-out infinite'
+				'bounce-gentle': 'bounce-gentle 2s ease-in-out infinite',
+				'wiggle': 'wiggle 1s ease-in-out infinite',
+				'rainbow': 'rainbow 3s linear infinite'
 			}
 		}
 	},
