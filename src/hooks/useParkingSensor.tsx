@@ -1,49 +1,112 @@
-
 import { useState, useEffect } from 'react';
 
 interface ParkingData {
   isOccupied: boolean;
   lastUpdated: Date;
   sensorStatus: 'online' | 'offline';
+  deviceName?: string;
+  rssi?: number;
+  snr?: number;
 }
 
-// Simulated sensor data - replace with actual sensor integration
+interface ApiResponse {
+  dev_eui: string;
+  device_name: string;
+  status: 'FREE' | 'OCCUPIED';
+  timestamp: string;
+}
+
+// Your Cloudflare Workers API URL - works for both development and production
+const API_BASE_URL = window.location.hostname === 'localhost' 
+  ? 'https://pt-parking-api.nik-cda.workers.dev'
+  : 'https://pt-parking-api.nik-cda.workers.dev';
+
 const useParkingSensor = () => {
   const [parkingData, setParkingData] = useState<ParkingData>({
     isOccupied: false,
     lastUpdated: new Date(),
-    sensorStatus: 'online'
+    sensorStatus: 'offline'
   });
 
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  const fetchSensorData = async () => {
+    try {
+      const response = await fetch(`${API_BASE_URL}/status`);
+      
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+      
+      const data: ApiResponse[] = await response.json();
+      
+      if (data && data.length > 0) {
+        const latestReading = data[0]; // Get the first/latest reading
+        
+        // Check if data is recent (within last 10 minutes = sensor online)
+        const lastUpdateTime = new Date(latestReading.timestamp);
+        const now = new Date();
+        const timeDiff = now.getTime() - lastUpdateTime.getTime();
+        const isRecent = timeDiff < 10 * 60 * 1000; // 10 minutes in milliseconds
+        
+        setParkingData({
+          isOccupied: latestReading.status === 'OCCUPIED',
+          lastUpdated: lastUpdateTime,
+          sensorStatus: isRecent ? 'online' : 'offline',
+          deviceName: latestReading.device_name
+        });
+        
+        setError(null);
+        console.log('Live sensor update:', { 
+          status: latestReading.status, 
+          device: latestReading.device_name,
+          timestamp: latestReading.timestamp 
+        });
+      } else {
+        // No data available
+        setParkingData(prev => ({
+          ...prev,
+          sensorStatus: 'offline'
+        }));
+        setError('No sensor data available');
+      }
+    } catch (err) {
+      console.error('Error fetching sensor data:', err);
+      setError(err instanceof Error ? err.message : 'Failed to fetch sensor data');
+      setParkingData(prev => ({
+        ...prev,
+        sensorStatus: 'offline'
+      }));
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   useEffect(() => {
-    // Simulate live sensor updates every 5 seconds
+    // Fetch data immediately when component mounts
+    fetchSensorData();
+
+    // Set up interval to fetch live data every 30 seconds
     const interval = setInterval(() => {
-      // Simulate sensor readings with some randomness
-      const isOccupied = Math.random() > 0.6; // 40% chance of being occupied
-      const sensorStatus = Math.random() > 0.05 ? 'online' : 'offline'; // 95% uptime
-      
-      setParkingData({
-        isOccupied,
-        lastUpdated: new Date(),
-        sensorStatus
-      });
-      
-      console.log('Parking sensor update:', { isOccupied, sensorStatus });
-    }, 5000);
+      fetchSensorData();
+    }, 30000);
 
     return () => clearInterval(interval);
   }, []);
 
   // Function to manually refresh sensor data
   const refreshSensor = () => {
-    setParkingData(prev => ({
-      ...prev,
-      lastUpdated: new Date(),
-      sensorStatus: 'online'
-    }));
+    setIsLoading(true);
+    fetchSensorData();
   };
 
-  return { parkingData, refreshSensor };
+  return { 
+    parkingData, 
+    refreshSensor, 
+    isLoading, 
+    error 
+  };
 };
 
 export default useParkingSensor;

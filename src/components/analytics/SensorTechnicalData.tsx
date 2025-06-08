@@ -1,14 +1,51 @@
-
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Wifi, Signal, Database } from "lucide-react";
+import { useState, useEffect } from "react";
 
-const sensorData = {
-  rssi: -67,
-  snr: 8.5,
-  totalPackets: 15247
-};
+interface TechnicalData {
+  rssi: number;
+  snr: number;
+  totalPackets: number;
+}
 
 const SensorTechnicalData = () => {
+  const [sensorData, setSensorData] = useState<TechnicalData>({
+    rssi: -67,
+    snr: 8.5,
+    totalPackets: 0
+  });
+  
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchTechnicalData = async () => {
+      try {
+        const API_BASE_URL = window.location.hostname === 'localhost' 
+          ? 'https://pt-parking-api.nik-cda.workers.dev'
+          : 'https://pt-parking-api.nik-cda.workers.dev';
+          
+        const response = await fetch(`${API_BASE_URL}/analytics/stats`);
+        if (response.ok) {
+          const data = await response.json();
+          setSensorData({
+            rssi: data.rssi,
+            snr: data.snr,
+            totalPackets: data.totalPackets
+          });
+        }
+      } catch (error) {
+        console.error('Error fetching technical data:', error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchTechnicalData();
+    // Update every 30 seconds
+    const interval = setInterval(fetchTechnicalData, 30000);
+    return () => clearInterval(interval);
+  }, []);
+
   return (
     <Card className="fun-shadow">
       <CardHeader className="pb-4">
@@ -28,7 +65,7 @@ const SensorTechnicalData = () => {
               <div>
                 <div className="text-xs font-medium text-paleo-purple">RSSI (Signal Strength)</div>
                 <div className="text-xl font-bold text-paleo-pink-dark">
-                  {sensorData.rssi} dBm
+                  {isLoading ? "..." : `${sensorData.rssi} dBm`}
                 </div>
                 <div className="text-xs text-paleo-purple opacity-75">
                   {sensorData.rssi > -70 ? "🟢 Excellent" : sensorData.rssi > -80 ? "🟡 Good" : "🔴 Weak"}
@@ -44,7 +81,7 @@ const SensorTechnicalData = () => {
               <div>
                 <div className="text-xs font-medium text-paleo-purple">SNR (Signal Quality)</div>
                 <div className="text-xl font-bold text-paleo-pink-dark">
-                  {sensorData.snr} dB
+                  {isLoading ? "..." : `${sensorData.snr} dB`}
                 </div>
                 <div className="text-xs text-paleo-purple opacity-75">
                   {sensorData.snr > 7 ? "🟢 Crystal Clear" : sensorData.snr > 3 ? "🟡 Clear" : "🔴 Noisy"}
@@ -58,9 +95,9 @@ const SensorTechnicalData = () => {
             <div className="flex items-center gap-3">
               <Database className="w-5 h-5 text-paleo-success" />
               <div>
-                <div className="text-xs font-medium text-paleo-purple">Total Packets Received</div>
+                <div className="text-xs font-medium text-paleo-purple">Total Uplinks Received</div>
                 <div className="text-xl font-bold text-paleo-pink-dark">
-                  {sensorData.totalPackets.toLocaleString()}
+                  {isLoading ? "..." : sensorData.totalPackets.toLocaleString()}
                 </div>
                 <div className="text-xs text-paleo-purple opacity-75">
                   📈 Since deployment

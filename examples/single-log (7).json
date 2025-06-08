@@ -1,0 +1,59 @@
+{
+    "deduplicationId": "db673f97-3ecb-4665-bc9b-4e8b23ebf9d5",
+    "time": "2025-06-08T19:18:11.582+00:00",
+    "deviceInfo": {
+        "tenantId": "2f78609d-a859-41b9-8d19-2c06e2edd5b4",
+        "tenantName": "MetSci Demo Account",
+        "applicationId": "0122b14d-ded9-4688-904d-9a3aef52417d",
+        "applicationName": "Parking - Fleximodo",
+        "deviceProfileId": "992c7289-e5b6-4b04-bcf3-de49818c9cd1",
+        "deviceProfileName": "Fleximodo Parking Sensors",
+        "deviceName": "FB070CAC - undersurface",
+        "devEui": "474f5350fb070cac",
+        "deviceClassEnabled": "CLASS_A",
+        "tags": {}
+    },
+    "devAddr": "78000007",
+    "adr": true,
+    "dr": 3,
+    "fCnt": 445,
+    "fPort": 2,
+    "confirmed": true,
+    "data": "AAkM0hnxAssAAA==",
+    "object": {
+        "parkingStatus": "FREE",
+        "statusChanged": true
+    },
+    "rxInfo": [
+        {
+            "gatewayId": "32dd44d69598fc75",
+            "uplinkId": 15911,
+            "gwTime": "2025-06-08T19:18:11.582+00:00",
+            "nsTime": "2025-06-08T19:18:11.710654062+00:00",
+            "rssi": -89,
+            "snr": 10.5,
+            "context": "c+PtFA==",
+            "metadata": {
+                "regi": "US915",
+                "gateway_name": "thankful-caramel-quail",
+                "gateway_lat": "32.763279613549365",
+                "network": "helium_iot",
+                "gateway_h3index": "8c29a418c868bff",
+                "gateway_long": "-117.123190934992294",
+                "gateway_id": "11FwHnBLCeyRL2iSwtdi3LNYi1jKTqa2kG71BXQwSYaLCiwdcG2"
+            },
+            "crcStatus": "CRC_OK"
+        }
+    ],
+    "txInfo": {
+        "frequency": 904300000,
+        "modulation": {
+            "lora": {
+                "bandwidth": 125000,
+                "spreadingFactor": 7,
+                "codeRate": "CR_4_5"
+            }
+        }
+    },
+    "regionConfigId": "us915_1"
+}
