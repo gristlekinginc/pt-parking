@@ -102,6 +102,18 @@ const InsightsSection = () => {
           </div>
         </div>
         
+        {/* Shop The Store Button */}
+        <div className="mt-8 mb-6 text-center">
+          <a
+            href="https://paleotreats.com"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-flex items-center gap-2 px-8 py-4 bg-paleo-pink text-white font-bold text-lg rounded-lg hover:bg-paleo-pink-dark transform hover:scale-105 transition-all duration-300 fun-shadow"
+          >
+            🛒 Shop The Store
+          </a>
+        </div>
+        
         <div className="mt-6 p-4 bg-paleo-pink/10 rounded-lg border border-paleo-pink/20">
           <div className="text-center">
             <div className="text-lg font-semibold text-paleo-pink-dark mb-2">
