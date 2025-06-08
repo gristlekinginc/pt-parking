@@ -68,10 +68,6 @@ const Index = () => {
 
           {/* Info Footer */}
           <div className="mt-12 text-center text-muted-foreground max-w-2xl">
-            <p className="text-sm font-medium">
-              📡 This parking monitor displays real-time data from our IoT sensor.
-              Live updates every 30 seconds with lots of love! 💕
-            </p>
             {parkingData.deviceName && (
               <p className="text-xs mt-2 opacity-75">
                 Device: {parkingData.deviceName}
@@ -97,7 +93,7 @@ const Index = () => {
             </div>
             
             <p className="text-xs text-muted-foreground mb-4">
-              This dashboard is powered by MeteoScientific using a Fleximodo parking sensor. MetSci brings high tech to dessert shops and other small businesses everywhere! ��✨
+              This dashboard is powered by MeteoScientific using a Fleximodo parking sensor. MetSci brings high tech to dessert shops and other small businesses everywhere! 🔬✨
             </p>
             
             <p className="text-xs mt-4 opacity-75 flex items-center justify-center gap-2">
