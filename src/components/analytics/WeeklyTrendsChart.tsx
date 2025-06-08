@@ -80,26 +80,26 @@ const WeeklyHeatmapChart = () => {
         ) : (
           <div className="w-full overflow-x-auto">
             <div className="min-w-[600px]">
-              {/* Header row with hours */}
-              <div className="grid grid-cols-[60px_repeat(13,1fr)] gap-1 mb-2">
+              {/* Header row with days */}
+              <div className="grid grid-cols-[60px_repeat(7,1fr)] gap-1 mb-2">
                 <div></div> {/* Empty corner */}
-                {hours.map(hour => (
-                  <div key={hour} className="text-xs text-center text-paleo-purple font-medium p-1">
-                    {hour === 12 ? '12PM' : hour > 12 ? `${hour-12}PM` : `${hour}AM`}
+                {days.map(day => (
+                  <div key={day} className="text-xs text-center text-paleo-purple font-medium p-1">
+                    {day}
                   </div>
                 ))}
               </div>
               
-              {/* Data rows */}
-              {days.map((day, dayIndex) => (
-                <div key={day} className="grid grid-cols-[60px_repeat(13,1fr)] gap-1 mb-1">
-                  {/* Day label */}
-                  <div className="text-xs text-paleo-purple font-medium p-2 flex items-center">
-                    {day}
+              {/* Data rows - each row is an hour */}
+              {hours.map(hour => (
+                <div key={hour} className="grid grid-cols-[60px_repeat(7,1fr)] gap-1 mb-1">
+                  {/* Hour label */}
+                  <div className="text-xs text-paleo-purple font-medium p-2 flex items-center justify-end">
+                    {hour === 12 ? '12PM' : hour > 12 ? `${hour-12}PM` : `${hour}AM`}
                   </div>
                   
-                  {/* Hour cells */}
-                  {hours.map(hour => {
+                  {/* Day cells for this hour */}
+                  {days.map((day, dayIndex) => {
                     const cell = dataMap.get(`${dayIndex}-${hour}`);
                     const occupancyRate = cell?.occupancyRate || 5;
                     
