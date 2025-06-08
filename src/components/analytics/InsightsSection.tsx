@@ -59,7 +59,7 @@ const InsightsSection = () => {
         </CardTitle>
       </CardHeader>
       <CardContent>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 text-center">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 text-center">
           <div className="space-y-2">
             <div className="text-2xl">🌅</div>
             <div className="font-semibold text-paleo-pink-dark">Best Times to Visit</div>
@@ -73,18 +73,6 @@ const InsightsSection = () => {
                     {time.availabilityRate}% likely available! 🚗✨
                   </div>
                 ))}
-              </div>
-            )}
-          </div>
-          <div className="space-y-2">
-            <div className="text-2xl">📊</div>
-            <div className="font-semibold text-paleo-pink-dark">Owner Schedule</div>
-            {isLoading ? (
-              <div className="text-sm text-paleo-purple">Calculating busy times...</div>
-            ) : (
-              <div className="text-sm text-paleo-purple">
-                Usually occupied: {timingData.peakTime.day}s {timingData.peakTime.timeSlot}<br/>
-                When owners are working! 💼 ({timingData.peakTime.occupancyRate}% occupied)
               </div>
             )}
           </div>
