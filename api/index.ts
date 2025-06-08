@@ -1,8 +1,8 @@
 export default {
   async fetch(request: Request, env: any, ctx: any): Promise<Response> {
-    // CORS headers for cross-origin requests
+    // CORS headers for cross-origin requests - restricted to parking domain
     const corsHeaders = {
-      'Access-Control-Allow-Origin': '*',
+      'Access-Control-Allow-Origin': 'https://parking.paleotreats.com',
       'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
       'Access-Control-Allow-Headers': 'Content-Type',
     };
@@ -15,22 +15,70 @@ export default {
     const url = new URL(request.url);
 
     if (request.method === "POST" && url.pathname === "/update") {
+      // Verify webhook signature for security
+      const signature = request.headers.get('X-Signature') || request.headers.get('Authorization');
+      const expectedSecret = env.WEBHOOK_SECRET;
+      
+      if (!signature || !expectedSecret) {
+        console.warn('Missing webhook signature or secret');
+        return new Response("Unauthorized", { status: 401, headers: corsHeaders });
+      }
+
+      // Simple bearer token check (MeteoScientific may use different format)
+      const token = signature.replace('Bearer ', '').replace('webhook-secret ', '');
+      if (token !== expectedSecret) {
+        console.warn('Invalid webhook signature');
+        return new Response("Unauthorized", { status: 401, headers: corsHeaders });
+      }
+
+      // Basic rate limiting - max 2 requests per minute per device
+      const clientIP = request.headers.get('CF-Connecting-IP') || 'unknown';
+      const rateLimitKey = `rate_limit:${clientIP}`;
+      
+      try {
+        const currentCount = await env.DB.prepare(`
+          SELECT COUNT(*) as count FROM parking_status_log 
+          WHERE timestamp > datetime('now', '-1 minute')
+        `).first();
+        
+        if (currentCount?.count > 120) { // Max 120 records per minute
+          return new Response("Rate limit exceeded", { status: 429, headers: corsHeaders });
+        }
+      } catch (e) {
+        console.warn('Rate limiting check failed:', e);
+      }
+
       const body = await request.json();
 
       try {
+        // Basic input validation
+        if (!body || typeof body !== 'object') {
+          return new Response("Invalid payload", { status: 400, headers: corsHeaders });
+        }
+
+        // Validate required MeteoScientific fields
+        if (!body.deviceInfo?.devEui || !body.object?.parkingStatus) {
+          return new Response("Missing required fields", { status: 400, headers: corsHeaders });
+        }
+
+        // Validate parking status is expected value
+        const parkingStatus = body.object.parkingStatus;
+        if (!['FREE', 'BUSY', 'OCCUPIED'].includes(parkingStatus)) {
+          return new Response("Invalid parking status", { status: 400, headers: corsHeaders });
+        }
+
         // Extract data from MeteoScientific payload structure
-        const devEui = body.deviceInfo?.devEui;
-        const deviceName = body.deviceInfo?.deviceName;
-        const parkingStatus = body.object?.parkingStatus; // "FREE" or "BUSY"
-        const statusChanged = body.object?.statusChanged;
-        const timestamp = body.time;
+        const devEui = body.deviceInfo.devEui;
+        const deviceName = body.deviceInfo.deviceName || 'unknown';
+        const statusChanged = body.object.statusChanged || false;
+        const timestamp = body.time || new Date().toISOString();
         
         // Get first rxInfo entry for radio data
         const rxInfo = body.rxInfo?.[0];
-        const rssi = rxInfo?.rssi;
-        const snr = rxInfo?.snr;
-        const gatewayId = rxInfo?.gatewayId;
-        const gatewayName = rxInfo?.metadata?.gateway_name;
+        const rssi = rxInfo?.rssi || null;
+        const snr = rxInfo?.snr || null;
+        const gatewayId = rxInfo?.gatewayId || null;
+        const gatewayName = rxInfo?.metadata?.gateway_name || null;
         const gatewayLat = rxInfo?.metadata?.gateway_lat ? parseFloat(rxInfo.metadata.gateway_lat) : null;
         const gatewayLong = rxInfo?.metadata?.gateway_long ? parseFloat(rxInfo.metadata.gateway_long) : null;
 
