@@ -1,6 +1,7 @@
 
 import PaleoTreatsLogo from "@/components/PaleoTreatsLogo";
 import ParkingStatusCard from "@/components/ParkingStatusCard";
+import ParkingAnalytics from "@/components/ParkingAnalytics";
 import useParkingSensor from "@/hooks/useParkingSensor";
 import { Button } from "@/components/ui/button";
 import { RefreshCw, Heart } from "lucide-react";
@@ -27,7 +28,7 @@ const Index = () => {
           <PaleoTreatsLogo />
           
           {/* Main Status Card */}
-          <div className="w-full max-w-4xl">
+          <div className="w-full max-w-4xl mb-12">
             <ParkingStatusCard 
               isOccupied={parkingData.isOccupied}
               lastUpdated={parkingData.lastUpdated}
@@ -36,7 +37,7 @@ const Index = () => {
           </div>
 
           {/* Controls */}
-          <div className="mt-8 flex gap-4">
+          <div className="mb-12 flex gap-4">
             <Button 
               onClick={handleRefresh}
               variant="outline"
@@ -46,6 +47,9 @@ const Index = () => {
               🔄 Refresh Sensor
             </Button>
           </div>
+
+          {/* Analytics Dashboard */}
+          <ParkingAnalytics />
 
           {/* Info Footer */}
           <div className="mt-12 text-center text-muted-foreground max-w-2xl">
