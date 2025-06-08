@@ -1,8 +1,8 @@
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { ChartContainer, ChartTooltip, ChartTooltipContent } from "@/components/ui/chart";
-import { BarChart, Bar, XAxis, YAxis, ResponsiveContainer, LineChart, Line, PieChart, Pie, Cell, AreaChart, Area } from "recharts";
-import { Clock, TrendingUp, Calendar, Users } from "lucide-react";
+import { BarChart, Bar, XAxis, YAxis, ResponsiveContainer, LineChart, Line, AreaChart, Area } from "recharts";
+import { Clock, TrendingUp, Calendar, Wifi, Signal, Database } from "lucide-react";
 
 // Mock data for the charts - replace with actual data from your backend
 const monthlyHoursData = [
@@ -36,11 +36,12 @@ const weeklyTrendsData = [
   { day: 'Sun', usage: 35 },
 ];
 
-const rentalOpportunityData = [
-  { name: 'Available for Rent', value: 40, color: 'hsl(var(--paleo-success))' },
-  { name: 'Company Use', value: 45, color: 'hsl(var(--paleo-pink))' },
-  { name: 'Peak Hours', value: 15, color: 'hsl(var(--paleo-warning))' },
-];
+// Mock sensor data - replace with actual sensor readings
+const sensorData = {
+  rssi: -67,
+  snr: 8.5,
+  totalPackets: 15247
+};
 
 const chartConfig = {
   hours: {
@@ -97,9 +98,9 @@ const ParkingAnalytics = () => {
         
         <Card className="bg-gradient-to-br from-paleo-purple/10 to-paleo-pink/10 border-paleo-purple/20">
           <CardContent className="p-4 text-center">
-            <Users className="w-8 h-8 text-paleo-purple mx-auto mb-2" />
-            <div className="text-2xl font-bold text-paleo-pink-dark">🏕️ 12h</div>
-            <div className="text-sm text-paleo-purple">Camper Hours</div>
+            <Database className="w-8 h-8 text-paleo-purple mx-auto mb-2" />
+            <div className="text-2xl font-bold text-paleo-pink-dark">🤓 15.2k</div>
+            <div className="text-sm text-paleo-purple">Total Packets</div>
           </CardContent>
         </Card>
       </div>
@@ -182,44 +183,65 @@ const ParkingAnalytics = () => {
           </CardContent>
         </Card>
 
-        {/* Rental Opportunities */}
+        {/* Nerd Boxes - Sensor Data */}
         <Card className="fun-shadow">
           <CardHeader>
             <CardTitle className="text-paleo-pink-dark flex items-center gap-2">
-              🏕️ Camper Rental Opportunities
+              🤓 Nerd Box - Sensor Stats
             </CardTitle>
             <CardDescription>
-              Perfect times to rent out to visiting campers! ⛺
+              For our tech-loving chocolate makers! 📡
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <ChartContainer config={chartConfig} className="h-64">
-              <PieChart>
-                <Pie
-                  data={rentalOpportunityData}
-                  cx="50%"
-                  cy="50%"
-                  innerRadius={40}
-                  outerRadius={80}
-                  dataKey="value"
-                >
-                  {rentalOpportunityData.map((entry, index) => (
-                    <Cell key={`cell-${index}`} fill={entry.color} />
-                  ))}
-                </Pie>
-                <ChartTooltip content={<ChartTooltipContent />} />
-              </PieChart>
-            </ChartContainer>
-            <div className="mt-4 space-y-2">
-              {rentalOpportunityData.map((item, index) => (
-                <div key={index} className="flex items-center gap-2 text-sm">
-                  <div 
-                    className="w-3 h-3 rounded-full" 
-                    style={{ backgroundColor: item.color }}
-                  />
-                  <span className="text-paleo-purple font-medium">{item.name}: {item.value}%</span>
+            <div className="grid grid-cols-1 gap-4 h-64">
+              {/* RSSI Box */}
+              <div className="bg-gradient-to-r from-paleo-purple/10 to-paleo-pink/10 p-4 rounded-lg border border-paleo-purple/20">
+                <div className="flex items-center gap-3">
+                  <Wifi className="w-6 h-6 text-paleo-purple" />
+                  <div>
+                    <div className="text-sm font-medium text-paleo-purple">RSSI (Signal Strength)</div>
+                    <div className="text-2xl font-bold text-paleo-pink-dark">
+                      {sensorData.rssi} dBm
+                    </div>
+                    <div className="text-xs text-paleo-purple opacity-75">
+                      {sensorData.rssi > -70 ? "🟢 Excellent" : sensorData.rssi > -80 ? "🟡 Good" : "🔴 Weak"}
+                    </div>
+                  </div>
                 </div>
-              ))}
+              </div>
+
+              {/* SNR Box */}
+              <div className="bg-gradient-to-r from-paleo-pink/10 to-paleo-success/10 p-4 rounded-lg border border-paleo-pink/20">
+                <div className="flex items-center gap-3">
+                  <Signal className="w-6 h-6 text-paleo-pink" />
+                  <div>
+                    <div className="text-sm font-medium text-paleo-purple">SNR (Signal Quality)</div>
+                    <div className="text-2xl font-bold text-paleo-pink-dark">
+                      {sensorData.snr} dB
+                    </div>
+                    <div className="text-xs text-paleo-purple opacity-75">
+                      {sensorData.snr > 7 ? "🟢 Crystal Clear" : sensorData.snr > 3 ? "🟡 Clear" : "🔴 Noisy"}
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Total Packets Box */}
+              <div className="bg-gradient-to-r from-paleo-success/10 to-paleo-warning/10 p-4 rounded-lg border border-paleo-success/20">
+                <div className="flex items-center gap-3">
+                  <Database className="w-6 h-6 text-paleo-success" />
+                  <div>
+                    <div className="text-sm font-medium text-paleo-purple">Total Packets Received</div>
+                    <div className="text-2xl font-bold text-paleo-pink-dark">
+                      {sensorData.totalPackets.toLocaleString()}
+                    </div>
+                    <div className="text-xs text-paleo-purple opacity-75">
+                      📈 Since deployment
+                    </div>
+                  </div>
+                </div>
+              </div>
             </div>
           </CardContent>
         </Card>
@@ -229,33 +251,33 @@ const ParkingAnalytics = () => {
       <Card className="fun-shadow bg-gradient-to-br from-paleo-pink/5 to-paleo-purple/5">
         <CardHeader>
           <CardTitle className="text-paleo-pink-dark text-center">
-            🎯 Sweet Insights & Recommendations
+            🎯 Sweet Insights & Tech Notes
           </CardTitle>
         </CardHeader>
         <CardContent>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6 text-center">
             <div className="space-y-2">
-              <div className="text-2xl">🌅</div>
-              <div className="font-semibold text-paleo-pink-dark">Best Camper Hours</div>
+              <div className="text-2xl">📡</div>
+              <div className="font-semibold text-paleo-pink-dark">Signal Quality</div>
               <div className="text-sm text-paleo-purple">
-                6AM-10AM & 6PM-10PM<br/>
-                Perfect for early birds & sunset lovers! 🏕️
+                RSSI at {sensorData.rssi} dBm<br/>
+                Perfect for chocolate-making updates! 🍫
               </div>
             </div>
             <div className="space-y-2">
-              <div className="text-2xl">💰</div>
-              <div className="font-semibold text-paleo-pink-dark">Revenue Potential</div>
+              <div className="text-2xl">🤓</div>
+              <div className="font-semibold text-paleo-pink-dark">Nerd Stats</div>
               <div className="text-sm text-paleo-purple">
-                ~$480/month<br/>
-                Based on 40% availability at $40/night! 💕
+                SNR: {sensorData.snr} dB<br/>
+                Clean signal for sweet data! 💕
               </div>
             </div>
             <div className="space-y-2">
               <div className="text-2xl">📊</div>
-              <div className="font-semibold text-paleo-pink-dark">Peak Efficiency</div>
+              <div className="font-semibold text-paleo-pink-dark">Data Flow</div>
               <div className="text-sm text-paleo-purple">
-                Thursdays & Fridays<br/>
-                Our busiest chocolate-making days! 🍫
+                {sensorData.totalPackets.toLocaleString()} packets<br/>
+                Our sensor is chatty! 🗣️
               </div>
             </div>
           </div>
