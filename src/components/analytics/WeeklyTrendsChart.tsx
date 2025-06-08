@@ -78,10 +78,10 @@ const WeeklyHeatmapChart = () => {
             Loading heatmap data...
           </div>
         ) : (
-          <div className="w-full overflow-x-auto">
-            <div className="min-w-[600px]">
+          <div className="w-full">
+            <div className="w-full">
               {/* Header row with days */}
-              <div className="grid grid-cols-[60px_repeat(7,1fr)] gap-1 mb-2">
+              <div className="grid grid-cols-[50px_repeat(7,1fr)] gap-1 mb-2">
                 <div></div> {/* Empty corner */}
                 {days.map(day => (
                   <div key={day} className="text-xs text-center text-paleo-purple font-medium p-1">
@@ -92,9 +92,9 @@ const WeeklyHeatmapChart = () => {
               
               {/* Data rows - each row is an hour */}
               {hours.map(hour => (
-                <div key={hour} className="grid grid-cols-[60px_repeat(7,1fr)] gap-1 mb-1">
+                <div key={hour} className="grid grid-cols-[50px_repeat(7,1fr)] gap-1 mb-1">
                   {/* Hour label */}
-                  <div className="text-xs text-paleo-purple font-medium p-2 flex items-center justify-end">
+                  <div className="text-xs text-paleo-purple font-medium p-1 flex items-center justify-end">
                     {hour === 12 ? '12PM' : hour > 12 ? `${hour-12}PM` : `${hour}AM`}
                   </div>
                   
@@ -106,7 +106,7 @@ const WeeklyHeatmapChart = () => {
                     return (
                       <div
                         key={`${dayIndex}-${hour}`}
-                        className={`h-8 rounded border border-white/20 ${getHeatColor(occupancyRate)} 
+                        className={`h-6 sm:h-8 rounded border border-white/20 ${getHeatColor(occupancyRate)} 
                                   hover:scale-105 transition-transform cursor-help relative group`}
                         title={`${day} ${hour === 12 ? '12PM' : hour > 12 ? `${hour-12}PM` : `${hour}AM`}: ${occupancyRate}% occupied`}
                       >
@@ -123,17 +123,17 @@ const WeeklyHeatmapChart = () => {
               ))}
               
               {/* Legend */}
-              <div className="mt-4 flex items-center justify-center gap-4 text-xs">
+              <div className="mt-4 flex items-center justify-center gap-2 sm:gap-4 text-xs flex-wrap">
                 <div className="flex items-center gap-1">
-                  <div className="w-4 h-4 bg-green-200 rounded border"></div>
+                  <div className="w-3 h-3 sm:w-4 sm:h-4 bg-green-200 rounded border"></div>
                   <span className="text-paleo-purple">Available</span>
                 </div>
                 <div className="flex items-center gap-1">
-                  <div className="w-4 h-4 bg-yellow-400 rounded border"></div>
+                  <div className="w-3 h-3 sm:w-4 sm:h-4 bg-yellow-400 rounded border"></div>
                   <span className="text-paleo-purple">Sometimes</span>
                 </div>
                 <div className="flex items-center gap-1">
-                  <div className="w-4 h-4 bg-red-500 rounded border"></div>
+                  <div className="w-3 h-3 sm:w-4 sm:h-4 bg-red-500 rounded border"></div>
                   <span className="text-paleo-purple">Usually Taken</span>
                 </div>
               </div>
