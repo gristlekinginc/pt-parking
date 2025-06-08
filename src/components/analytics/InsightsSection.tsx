@@ -107,13 +107,8 @@ const InsightsSection = () => {
             <div className="text-lg font-semibold text-paleo-pink-dark mb-2">
               💡 Pro Tip for Data Lovers
             </div>
-            <div className="flex items-center justify-center gap-3 mb-2">
-              <div className="w-8 h-8 rounded-full bg-gradient-to-br from-paleo-purple to-paleo-pink border-2 border-paleo-pink/20 flex items-center justify-center">
-                <span className="text-xs font-bold text-white">MS</span>
-              </div>
-              <div className="text-sm text-paleo-purple font-medium">
-                This dashboard is powered by MeteoScientific, bringing science to dessert shops and other small businesses everywhere! 🔬✨
-              </div>
+            <div className="text-sm text-paleo-purple font-medium">
+              The best times to visit the shop and find Nik or Lee will usually be when the parking spot is taken. We park there when we work, so if it's taken, it's probably us. See you soon! 👋✨
             </div>
           </div>
         </div>

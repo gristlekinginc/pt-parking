@@ -69,7 +69,7 @@ const Index = () => {
           {/* Info Footer */}
           <div className="mt-12 text-center text-muted-foreground max-w-2xl">
             <p className="text-sm font-medium">
-              📡 This parking monitor displays real-time data from our MeteoScientific IoT sensor.
+              📡 This parking monitor displays real-time data from our IoT sensor.
               Live updates every 30 seconds with lots of love! 💕
             </p>
             {parkingData.deviceName && (
@@ -77,6 +77,29 @@ const Index = () => {
                 Device: {parkingData.deviceName}
               </p>
             )}
+            
+            {/* MeteoScientific Logo Section */}
+            <div className="mt-6 mb-4 flex items-center justify-center">
+              <span className="text-xs text-muted-foreground mr-3">Powered by</span>
+              <a 
+                href="https://meteoscientific.com" 
+                target="_blank" 
+                rel="noopener noreferrer"
+                className="transition-transform hover:scale-105 hover:opacity-80 inline-block"
+                title="Visit MeteoScientific"
+              >
+                <img 
+                  src="/metsci_logo.svg" 
+                  alt="MeteoScientific Logo" 
+                  className="h-8 w-auto"
+                />
+              </a>
+            </div>
+            
+            <p className="text-xs text-muted-foreground mb-4">
+              This dashboard is powered by MeteoScientific using a Fleximodo parking sensor. MetSci brings high tech to dessert shops and other small businesses everywhere! ��✨
+            </p>
+            
             <p className="text-xs mt-4 opacity-75 flex items-center justify-center gap-2">
               <Heart className="w-3 h-3 text-paleo-pink animate-pulse" />
               Made with love for Paleo Treats • paleotreats.com
