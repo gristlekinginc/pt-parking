@@ -68,12 +68,6 @@ const Index = () => {
 
           {/* Info Footer */}
           <div className="mt-12 text-center text-muted-foreground max-w-2xl">
-            {parkingData.deviceName && (
-              <p className="text-xs mt-2 opacity-75">
-                Device: {parkingData.deviceName}
-              </p>
-            )}
-            
             {/* MeteoScientific Logo Section */}
             <div className="mt-6 mb-4 flex items-center justify-center">
               <span className="text-xs text-muted-foreground mr-3">Powered by</span>
