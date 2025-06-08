@@ -32,11 +32,15 @@ const InsightsSection = () => {
         <div className="mt-6 p-4 bg-paleo-pink/10 rounded-lg border border-paleo-pink/20">
           <div className="text-center">
             <div className="text-lg font-semibold text-paleo-pink-dark mb-2">
-              💡 Pro Tip for Chocolate Lovers
+              💡 Pro Tip for Data Lovers
             </div>
-            <div className="text-sm text-paleo-purple">
-              Our spot is most available outside business hours (before 10 AM & after 6 PM). 
-              During our open hours (10 AM - 6 PM), try visiting early morning or late afternoon for the best parking luck! 🍀
+            <div className="flex items-center justify-center gap-3 mb-2">
+              <div className="w-8 h-8 rounded-full bg-gradient-to-br from-paleo-purple to-paleo-pink border-2 border-paleo-pink/20 flex items-center justify-center">
+                <span className="text-xs font-bold text-white">MS</span>
+              </div>
+              <div className="text-sm text-paleo-purple font-medium">
+                This dashboard is powered by MeteoScientific, bringing science to dessert shops and other small businesses everywhere! 🔬✨
+              </div>
             </div>
           </div>
         </div>
