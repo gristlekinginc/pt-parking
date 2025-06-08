@@ -10,21 +10,13 @@ const InsightsSection = () => {
         </CardTitle>
       </CardHeader>
       <CardContent>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 text-center">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 text-center">
           <div className="space-y-2">
             <div className="text-2xl">🌅</div>
             <div className="font-semibold text-paleo-pink-dark">Best Time to Visit</div>
             <div className="text-sm text-paleo-purple">
               Early mornings (8-10 AM)<br/>
               Almost always available! 🚗✨
-            </div>
-          </div>
-          <div className="space-y-2">
-            <div className="text-2xl">🌙</div>
-            <div className="font-semibold text-paleo-pink-dark">After Hours Parking</div>
-            <div className="text-sm text-paleo-purple">
-              Available after 6 PM<br/>
-              Perfect for evening treats! 🍫
             </div>
           </div>
           <div className="space-y-2">
