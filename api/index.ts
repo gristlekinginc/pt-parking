@@ -144,7 +144,7 @@ export default {
     }
 
     if (request.method === "GET" && url.pathname === "/status") {
-      const result = await env.DB.prepare("SELECT * FROM latest_parking_status").all();
+      const result = await env.DB.prepare("SELECT * FROM latest_parking_status ORDER BY timestamp DESC").all();
       
       // Check for authentication to access real device identifiers
       const authHeader = request.headers.get('Authorization');
