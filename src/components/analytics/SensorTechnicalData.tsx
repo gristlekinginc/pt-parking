@@ -83,7 +83,7 @@ const SensorTechnicalData = () => {
                   {isLoading ? "..." : `${sensorData.rssi} dBm`}
                 </div>
                 <div className="text-xs text-paleo-purple opacity-75">
-                  {sensorData.rssi > -70 ? "🟢 Excellent" : sensorData.rssi > -80 ? "🟡 Good" : "🔴 Weak"}
+                  {sensorData.rssi >= -80 ? "🔥 Strong" : sensorData.rssi >= -100 ? "🟢 Good" : sensorData.rssi >= -110 ? "🟡 Fair" : sensorData.rssi >= -130 ? "🟠 Weak" : "🔴 Very Weak"}
                 </div>
               </div>
             </div>
