@@ -83,7 +83,7 @@ const ParkingStatusCard = ({
                 {isLoading ? "UPDATING" : statusText}
               </h1>
               <p className="text-xl opacity-90 font-medium">
-                🅿️ {isLoading ? "Fetching Status..." : "Parking Spot Status"}
+                🅿️ {isLoading ? "Fetching Status..." : "Alley Parking Spot Status"}
               </p>
             </div>
           </div>
