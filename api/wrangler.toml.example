@@ -1,0 +1,14 @@
+name = "your-parking-api"
+main = "index.ts"
+compatibility_date = "2025-06-08"
+
+[[d1_databases]]
+binding = "DB"
+database_name = "your-parking"
+database_id = "your-database-id-here"
+
+# To set up:
+# 1. Run: npx wrangler d1 create your-parking
+# 2. Copy the database_id from the output
+# 3. Rename this file to wrangler.toml
+# 4. Update the database_id above 

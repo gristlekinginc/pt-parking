@@ -1,213 +1,341 @@
-
 # Paleo Treats Parking Monitor - Architecture Documentation
 
 ## 🏗️ Application Overview
 
-This is a single-page React application that monitors the parking status for Paleo Treats using a fun, branded interface. The app displays real-time parking data, analytics charts, and sensor statistics with a playful pink and purple theme.
+This is a production IoT parking monitoring system using **real LoRaWAN sensors** to track parking availability for small businesses. The system combines hardware sensors, serverless backend infrastructure, and a modern web dashboard to provide real-time parking status and analytics.
 
 ## 📁 Project Structure
 
 ```
-src/
-├── components/
-│   ├── analytics/           # Analytics dashboard components
-│   ├── ui/                 # Reusable UI components (shadcn/ui)
-│   ├── PaleoTreatsLogo.tsx # Main branding header
-│   └── ParkingStatusCard.tsx # Live status display
-├── hooks/
-│   └── useParkingSensor.tsx # Parking data management
-├── pages/
-│   └── Index.tsx           # Main page component
-└── App.tsx                 # Root application component
+.
+├── src/                          # React Frontend
+│   ├── components/
+│   │   ├── analytics/            # Analytics dashboard components
+│   │   │   ├── SensorStatsCards.tsx        # Quick stats overview
+│   │   │   ├── MonthlyHoursChart.tsx       # Bar chart - monthly hours
+│   │   │   ├── HourlyOccupancyChart.tsx    # Area chart - hourly patterns  
+│   │   │   ├── WeeklyTrendsChart.tsx       # Heatmap - weekly patterns
+│   │   │   ├── SensorTechnicalData.tsx     # "Nerd Box" - 6 technical metrics
+│   │   │   └── InsightsSection.tsx         # Personal message section
+│   │   ├── ui/                   # Reusable UI components (shadcn/ui)
+│   │   ├── PaleoTreatsLogo.tsx   # Branded header with heart animation
+│   │   ├── ParkingStatusCard.tsx # Main status display (FREE/OCCUPIED)
+│   │   └── ParkingAnalytics.tsx  # Analytics container/grid layout
+│   ├── hooks/
+│   │   └── useParkingSensor.tsx  # Real sensor data management
+│   ├── pages/
+│   │   └── Index.tsx             # Main page component
+│   └── App.tsx                   # Root application
+├── api/                          # Cloudflare Workers Backend
+│   ├── index.ts                  # Main worker with 5 API endpoints
+│   ├── schema.sql                # Database schema (2 tables)
+│   ├── wrangler.toml             # Worker configuration (DO NOT COMMIT)
+│   └── wrangler.toml.example     # Template for public use
+├── examples/                     # Real sensor payload samples
+├── public/                       # Static assets including MetSci logo
+└── dist/                         # Built frontend (auto-generated)
 ```
 
 ## 🎯 Core Components Architecture
 
-### 1. Main Application Flow
-- **App.tsx** → **Index.tsx** → All child components
-- Data flows from `useParkingSensor` hook to display components
-- Real-time updates every 5 seconds via simulated sensor data
+### 1. Hardware Layer
+- **Sensor**: MeteoScientific Fleximodo In Ground parking sensor
+- **Network**: Helium IoT Network (LoRaWAN)
+- **Gateway**: Helium hotspot in your area
+- **Signal**: 904.3 MHz, DR3, SF7/125kHz
 
-### 2. Component Hierarchy
+### 2. Data Flow Pipeline
 
+```
+LoRaWAN Sensor → Helium Network → ChirpStack → Webhook → Cloudflare Worker → D1 Database → React Dashboard
+```
+
+#### Webhook Payload Structure
+```json
+{
+  "deviceInfo": {
+    "devEui": "1a2b3c4d5e6f7890",
+    "deviceName": "SENSOR01 - underground"
+  },
+  "object": {
+    "parkingStatus": "FREE", // or "BUSY"
+    "statusChanged": true
+  },
+  "rxInfo": [{
+    "rssi": -89,
+    "snr": 10.5,
+    "gatewayId": "a1b2c3d4e5f67890",
+    "metadata": {
+      "gateway_name": "snapping-purple-alligator",
+      "network": "helium_iot"
+    }
+  }],
+  "time": "2025-01-17T19:18:11.582+00:00"
+}
+```
+
+### 3. Backend Infrastructure (Cloudflare Workers)
+
+#### Database Schema
+```sql
+-- Main log table (all sensor readings)
+parking_status_log (
+  id INTEGER PRIMARY KEY,
+  dev_eui TEXT,
+  device_name TEXT, 
+  status TEXT CHECK(status IN ('FREE', 'OCCUPIED')),
+  status_changed BOOLEAN,
+  timestamp TEXT,
+  rssi INTEGER,
+  snr REAL,
+  gateway_id TEXT,
+  gateway_name TEXT,
+  gateway_lat REAL,
+  gateway_long REAL
+);
+
+-- Latest status table (current state)
+latest_parking_status (
+  dev_eui TEXT PRIMARY KEY,
+  device_name TEXT,
+  status TEXT CHECK(status IN ('FREE', 'OCCUPIED')),
+  timestamp TEXT
+);
+```
+
+#### API Endpoints
+```typescript
+POST /update              // Webhook for sensor data (authenticated)
+GET  /status              // Current parking status
+GET  /analytics/stats     // Dashboard statistics
+GET  /analytics/monthly   // Monthly usage data for bar chart
+GET  /analytics/weekly    // Weekly heatmap data (7 days × 13 hours)
+GET  /analytics/best-times // Best/worst times analysis
+```
+
+#### Security Features
+- **Webhook Authentication**: Bearer token verification
+- **Input Validation**: Schema validation on all inputs
+- **Rate Limiting**: 120 requests/minute max
+- **CORS Protection**: Configurable origin restrictions
+- **SQL Injection Prevention**: Prepared statements
+- **Device ID Masking**: No hardware IDs exposed publicly
+
+### 4. Frontend Architecture (React + TypeScript)
+
+#### Component Hierarchy
 ```
 Index.tsx (Main Page)
-├── PaleoTreatsLogo.tsx
-├── ParkingStatusCard.tsx
-├── Refresh Button
-└── ParkingAnalytics.tsx
-    ├── SensorStatsCards.tsx
-    ├── MonthlyHoursChart.tsx
-    ├── HourlyOccupancyChart.tsx
-    ├── WeeklyTrendsChart.tsx
-    ├── SensorTechnicalData.tsx
-    └── InsightsSection.tsx
+├── PaleoTreatsLogo.tsx (Branded header)
+├── ParkingStatusCard.tsx (Live status: FREE/OCCUPIED)
+├── Refresh Button (Manual sensor refresh)
+└── ParkingAnalytics.tsx (Analytics grid container)
+    ├── SensorStatsCards.tsx (4 quick stats)
+    ├── MonthlyHoursChart.tsx (6-month bar chart)
+    ├── HourlyOccupancyChart.tsx (24-hour area chart)
+    ├── WeeklyTrendsChart.tsx (7×13 heatmap grid)
+    ├── SensorTechnicalData.tsx (6 technical metrics)
+    └── InsightsSection.tsx (Personal message)
 ```
+
+#### Data Management Hook
+```typescript
+useParkingSensor() {
+  // Real-time sensor data fetching
+  // Smart offline detection based on business hours
+  // 30-second update intervals
+  // Error handling and loading states
+}
+```
+
+#### Intelligent Features
+- **Smart Offline Detection**: Business-aware offline thresholds
+- **Predictive Analytics**: Next-hour availability prediction
+- **Intelligent Defaults**: Uses owner schedule until 2+ weeks of data
+- **Responsive Design**: Mobile-first with breakpoint optimizations
 
 ## 📊 Component Breakdown
 
 ### Live Status Components
 
-#### PaleoTreatsLogo.tsx
-**Purpose**: Brand header with animated heart logo
-**Location**: `src/components/PaleoTreatsLogo.tsx`
-**Used in**: `Index.tsx`
-**Features**: 
-- Animated heart icon with pulse effect
-- Paleo Treats branding
-- Pink gradient background
-
 #### ParkingStatusCard.tsx
-**Purpose**: Main live status display showing if parking spot is occupied/vacant
-**Location**: `src/components/ParkingStatusCard.tsx`
-**Used in**: `Index.tsx`
-**Props**: 
-- `isOccupied: boolean` - Current parking status
-- `lastUpdated: Date` - Timestamp of last sensor reading
-- `sensorStatus: 'online' | 'offline'` - Sensor connectivity status
+**Purpose**: Main real-time status display
+**Features**: 
+- Large VACANT/OCCUPIED status with color coding
+- Sensor online/offline badge
+- Device type display ("Fleximodo In Ground")
+- Last updated timestamp
+- Animated status changes
+
+#### PaleoTreatsLogo.tsx  
+**Purpose**: Branded header with business identity
 **Features**:
-- Large status display with icons
-- Color-coded backgrounds (green for vacant, orange for occupied)
-- Sensor status badge
-- Animated elements
+- Animated heart logo with pulse effect
+- Pink/purple gradient background
+- Company branding integration
 
 ### Analytics Dashboard Components
 
-#### ParkingAnalytics.tsx
-**Purpose**: Container component for all analytics widgets
-**Location**: `src/components/ParkingAnalytics.tsx`
-**Used in**: `Index.tsx`
-**Features**: Responsive grid layout for analytics components
-
 #### SensorStatsCards.tsx
-**Purpose**: Quick stats overview in card format
-**Location**: `src/components/analytics/SensorStatsCards.tsx`
-**Used in**: `ParkingAnalytics.tsx`
+**Purpose**: Quick overview statistics in card format
 **Displays**:
-- Monthly parking hours (203h)
-- Peak usage percentage (88%)
-- Current availability (40%)
-- Total data packets (15.2k)
+- Monthly parking hours (from real data)
+- Peak usage percentage
+- Next hour availability prediction
+- Total uplinks received (real packet count)
 
 #### MonthlyHoursChart.tsx
-**Purpose**: Bar chart showing parking hours by month
-**Location**: `src/components/analytics/MonthlyHoursChart.tsx`
-**Used in**: `ParkingAnalytics.tsx`
-**Data**: 6 months of parking hour totals
-**Chart Type**: Bar chart using Recharts
+**Purpose**: Historical usage trends by month
+**Data Source**: 6 months of OCCUPIED status aggregation
+**Chart Type**: Recharts bar chart with responsive design
 
-#### HourlyOccupancyChart.tsx
-**Purpose**: Area chart showing occupancy patterns by hour of day
-**Location**: `src/components/analytics/HourlyOccupancyChart.tsx`
-**Used in**: `ParkingAnalytics.tsx`
-**Data**: Hourly occupancy percentages from 6AM-10PM
-**Chart Type**: Area chart using Recharts
+#### HourlyOccupancyChart.tsx  
+**Purpose**: Daily usage patterns by hour
+**Data Source**: Historical hourly occupancy percentages
+**Chart Type**: Recharts area chart, 6AM-10PM range
 
-#### WeeklyTrendsChart.tsx
-**Purpose**: Line chart showing usage trends by day of week
-**Location**: `src/components/analytics/WeeklyTrendsChart.tsx`
-**Used in**: `ParkingAnalytics.tsx`
-**Data**: Weekly usage percentages Monday-Sunday
-**Chart Type**: Line chart using Recharts
+#### WeeklyTrendsChart.tsx (WeeklyHeatmapChart)
+**Purpose**: Weekly usage heatmap showing day×hour patterns
+**Data Source**: 
+- **Default Mode**: Owner working schedule (first 2 weeks)
+- **Data Mode**: Real historical data (after 20+ data points)
+**Format**: 7 days × 13 hours (8AM-8PM) grid
+**Intelligence**: Automatically switches from defaults to real data
 
 #### SensorTechnicalData.tsx
-**Purpose**: "Nerd Box" displaying technical sensor metrics
-**Location**: `src/components/analytics/SensorTechnicalData.tsx`
-**Used in**: `ParkingAnalytics.tsx`
-**Displays**:
-- RSSI (Signal Strength): -67 dBm
-- SNR (Signal Quality): 8.5 dB
-- Total Packets Received: 15,247
-**Features**: Color-coded status indicators
+**Purpose**: Technical "Nerd Box" for sensor diagnostics
+**6 Metrics Displayed**:
+1. **RSSI**: Signal strength (-67 to -116 dBm range)
+2. **SNR**: Signal quality (8.5 to 10.8 dB range)  
+3. **Gateway**: "snapping-purple-alligator" + HELIUM IOT
+4. **Frequency**: 904.3 MHz + DR3 data rate
+5. **Frame Count**: Current session count (350+)
+6. **Total Packets**: All-time uplinks received
 
 #### InsightsSection.tsx
-**Purpose**: Fun insights and tips about parking patterns
-**Location**: `src/components/analytics/InsightsSection.tsx`
-**Used in**: `ParkingAnalytics.tsx`
+**Purpose**: Personal messaging and MeteoScientific branding
 **Content**:
-- Best time to visit (8-10 AM)
-- Peak hours (12-3 PM)
-- MeteoScientific branding section
+- Personal message about contacting business when spot occupied
+- MeteoScientific logo and attribution
+- Fleximodo sensor credit
 
 ## 🔧 Data Management
 
-### useParkingSensor Hook
-**Purpose**: Manages parking sensor data and provides real-time updates
-**Location**: `src/hooks/useParkingSensor.tsx`
-**Used in**: `Index.tsx`
-**Returns**:
-- `parkingData`: Current sensor readings
-- `refreshSensor()`: Manual refresh function
-**Features**:
-- Simulates sensor updates every 5 seconds
-- Random occupancy status (40% occupied probability)
-- 95% sensor uptime simulation
+### Real Sensor Integration
+- **Provider**: MeteoScientific via ChirpStack console
+- **Network**: Helium IoT Network (decentralized LoRaWAN)
+- **Updates**: Real sensor data every ~2-5 minutes
+- **Webhook**: Authenticated via Bearer token
+- **Payload**: 10-byte LoRaWAN frames decoded to JSON
+
+### Intelligent Business Logic
+- **Offline Detection**: Business-hour aware thresholds
+- **Default Patterns**: Owner working schedule as fallback
+- **Data Transition**: Auto-switch to real data after 2+ weeks
+- **Predictive Analytics**: Next-hour availability based on patterns
 
 ## 🎨 Design System
 
-### Color Scheme (defined in index.css)
-- **Primary Pink**: `--paleo-pink` (320 85% 60%)
-- **Purple Accent**: `--paleo-purple` (280 70% 65%)
-- **Success Green**: `--paleo-success` (145 70% 55%)
-- **Warning Orange**: `--paleo-warning` (45 95% 65%)
+### Color Scheme
+```css
+--paleo-pink: hsl(320 85% 60%)
+--paleo-purple: hsl(280 70% 65%)  
+--paleo-success: hsl(145 70% 55%)
+--paleo-warning: hsl(45 95% 65%)
+```
 
-### Custom CSS Classes
-- `.paleo-gradient-fun`: Multi-stop pink/purple gradient
-- `.parking-vacant`: Green gradient for available status
-- `.parking-occupied`: Orange gradient for occupied status
-- `.fun-shadow`: Pink-tinted drop shadow
-- `.bounce-fun`: Custom bounce animation
-- `.pulse-fun`: Custom pulse animation
+### Component Styling
+- **Cards**: Gradient backgrounds with branded shadows
+- **Status**: Color-coded (green=vacant, orange=occupied)
+- **Animations**: Pulse, bounce, and scale transitions
+- **Icons**: Lucide React icon library
+- **Typography**: Inter font family
 
 ## 📱 Responsive Design
 
-The application uses a mobile-first responsive design:
-- Grid layouts adjust from 1 column (mobile) to 2-4 columns (desktop)
-- Charts maintain readability on all screen sizes
-- Cards stack vertically on mobile devices
+### Breakpoint Strategy
+- **Mobile**: Single column layout, compact cards
+- **Tablet**: 2-column grid layout
+- **Desktop**: 3-4 column grid with larger visualizations
 
-## 🔄 Data Flow
+### Mobile Optimizations
+- Smaller heatmap cells (h-6 vs h-8)
+- Compressed technical data layout
+- Touch-friendly buttons and interactions
+- Reduced padding and margins
 
-1. **useParkingSensor** generates simulated sensor data every 5 seconds
-2. Data flows to **Index.tsx** as props
-3. **ParkingStatusCard** displays live status
-4. **ParkingAnalytics** shows historical analytics (static data)
-5. User can manually refresh via button in **Index.tsx**
+## 🔄 Real-Time Data Flow
+
+### Update Cycle
+1. **Sensor** detects status change → sends LoRaWAN uplink
+2. **Helium Network** routes to gateway → forwards to ChirpStack
+3. **ChirpStack** decodes → sends authenticated webhook
+4. **Cloudflare Worker** validates → stores in D1 database
+5. **React Frontend** polls every 30 seconds → updates UI
+
+### Smart Offline Detection Logic
+```typescript
+// Business-aware offline detection
+if (businessHours && recentActivity) {
+  showOffline = hoursWithoutUpdate > 0.1  // 6 minutes
+} else {
+  showOffline = hoursWithoutUpdate >= 6   // 6 hours  
+}
+```
 
 ## 🛠️ Technologies Used
 
+### Frontend Stack
 - **React 18** with TypeScript
-- **Vite** for build tooling
-- **Tailwind CSS** for styling
-- **shadcn/ui** for UI components
-- **Recharts** for data visualization
-- **Lucide React** for icons
-- **React Router DOM** for routing
+- **Vite** for fast development and building
+- **Tailwind CSS** for utility-first styling
+- **shadcn/ui** for consistent UI components
+- **Recharts** for responsive data visualization
+- **Lucide React** for consistent iconography
 
-## 🚀 Development Notes
+### Backend Stack  
+- **Cloudflare Workers** (serverless runtime)
+- **Cloudflare D1** (SQLite-based database)
+- **Wrangler** for deployment and management
 
-### Adding New Analytics Components
-1. Create component in `src/components/analytics/`
-2. Import and add to `ParkingAnalytics.tsx` grid
-3. Use existing color scheme and shadow classes
-4. Follow naming convention: `[Feature][Type].tsx`
+### Hardware Stack
+- **MeteoScientific Fleximodo** in-ground parking sensor
+- **Helium IoT Network** (LoRaWAN)
+- **ChirpStack** application server
 
-### Modifying Sensor Data
-- Edit `useParkingSensor.tsx` for different update intervals
-- Modify probability values for different occupancy patterns
-- Replace with actual sensor API calls when ready
+## 🚀 Deployment Architecture
 
-### Styling Guidelines
-- Use semantic color tokens from design system
-- Apply `.fun-shadow` class for consistent shadows
-- Use gradient classes for branded backgrounds
-- Follow mobile-first responsive patterns
+### Infrastructure
+- **Frontend**: Cloudflare Pages (CDN + edge delivery)
+- **API**: Cloudflare Workers (global edge compute)
+- **Database**: Cloudflare D1 (distributed SQLite)
+- **Secrets**: Cloudflare Workers secrets (encrypted)
+
+### Cost Structure
+- **Hardware**: ~$200-300 (one-time sensor cost)
+- **Monthly**: $0 (free tier covers small business usage)
+- **Scalability**: Pay-as-you-grow pricing model
 
 ## 📋 Future Enhancement Ideas
 
-- Real sensor integration (replace simulated data)
-- Historical data storage and retrieval
-- Push notifications for status changes
-- Admin dashboard for sensor management
-- Multiple parking spot support
-- Weather integration for usage predictions
+### Technical Improvements
+- **Temperature Monitoring**: Add ground temperature from sensor
+- **Battery Alerts**: Low battery notifications
+- **Multi-Sensor**: Support for multiple parking spots
+- **Historical Export**: CSV/JSON data export
+
+### Business Features  
+- **Reservation System**: Allow customers to reserve spots
+- **Push Notifications**: Real-time availability alerts
+- **Weather Integration**: Correlate usage with weather patterns
+- **Admin Dashboard**: Sensor management and configuration
+
+### Analytics Enhancements
+- **Machine Learning**: Predict busy periods more accurately
+- **A/B Testing**: Test different notification strategies
+- **Usage Reports**: Monthly business intelligence reports
+- **Customer Insights**: Understand visitor patterns
+
+---
+
+*This architecture supports a real-world IoT deployment serving actual customers while maintaining enterprise-grade security and reliability on a small business budget.*

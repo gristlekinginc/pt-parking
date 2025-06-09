@@ -1,8 +1,9 @@
 export default {
   async fetch(request: Request, env: any, ctx: any): Promise<Response> {
-    // CORS headers for cross-origin requests - restricted to parking domain
+    // CORS headers for cross-origin requests - configurable for different deployments
+    const allowedOrigin = env.CORS_ORIGIN || 'https://parking.paleotreats.com';
     const corsHeaders = {
-      'Access-Control-Allow-Origin': 'https://parking.paleotreats.com',
+      'Access-Control-Allow-Origin': allowedOrigin,
       'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
       'Access-Control-Allow-Headers': 'Content-Type',
     };
@@ -286,8 +287,7 @@ export default {
     if (request.method === "GET" && url.pathname === "/analytics/weekly") {
       try {
         // Check if we have at least 2 weeks of data for accurate heatmap
-        const twoWeeksAgo = await env.DB.prepare(`
-          SELECT COUNT(*) as count FROM parking_status_log 
+        const twoWeeksAgo = await env.DB.prepare(`          SELECT COUNT(*) as count FROM parking_status_log 
           WHERE timestamp > date('now', '-14 days')
         `).first();
 
@@ -552,3 +552,4 @@ export default {
     return new Response("Not found", { status: 404, headers: corsHeaders });
   }
 };
+
