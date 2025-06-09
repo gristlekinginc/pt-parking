@@ -54,7 +54,15 @@ const useParkingSensor = () => {
       const data: ApiResponse[] = await response.json();
       
       if (data && data.length > 0) {
-        const latestReading = data[0]; // Get the first/latest reading
+        // Filter for the real device (long format DevEUI)
+        const realDeviceData = data.filter(entry => entry.dev_eui === '474f5350fb070cac');
+        
+        if (realDeviceData.length === 0) {
+          // Fallback to first entry if specific device not found
+          console.warn('Real device not found, using first available entry');
+        }
+        
+        const latestReading = realDeviceData.length > 0 ? realDeviceData[0] : data[0];
         const lastUpdateTime = new Date(latestReading.timestamp);
         
         // Use smart offline detection

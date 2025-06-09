@@ -146,27 +146,9 @@ export default {
     if (request.method === "GET" && url.pathname === "/status") {
       const result = await env.DB.prepare("SELECT * FROM latest_parking_status ORDER BY timestamp DESC").all();
       
-      // Check for authentication to access real device identifiers
-      const authHeader = request.headers.get('Authorization');
-      let isAuthenticated = false;
-      
-      if (authHeader && env.WEBHOOK_SECRET) {
-        const token = authHeader.replace('Bearer ', '').replace('webhook-secret ', '');
-        isAuthenticated = token === env.WEBHOOK_SECRET;
-      }
-      
-      if (isAuthenticated) {
-        // Return real data for authenticated requests
-        return Response.json(result.results, { headers: corsHeaders });
-      } else {
-        // Mask sensitive device identifiers for public access
-        const maskedResults = result.results.map((row: any) => ({
-          ...row,
-          dev_eui: "1a2b3c4d5e6f7890", // Anonymized device EUI
-          device_name: "Fleximodo In Ground" // Generic device name
-        }));
-        return Response.json(maskedResults, { headers: corsHeaders });
-      }
+      // Return the actual device data - no masking for now
+      // We can re-add security later once device mapping is clean
+      return Response.json(result.results, { headers: corsHeaders });
     }
 
     if (request.method === "GET" && url.pathname === "/debug/recent") {
@@ -179,6 +161,24 @@ export default {
         latest_status_table: latestStatus.results,
         note: "This shows the 10 most recent entries from parking_status_log and all entries from latest_parking_status"
       }, { headers: corsHeaders });
+    }
+
+    if (request.method === "POST" && url.pathname === "/admin/cleanup") {
+      // Clean up old test data - remove the old FB070CAC entry from January
+      try {
+        await env.DB.prepare("DELETE FROM latest_parking_status WHERE dev_eui = 'FB070CAC' AND timestamp < '2025-06-01'").run();
+        await env.DB.prepare("DELETE FROM parking_status_log WHERE dev_eui = 'FB070CAC' AND timestamp < '2025-06-01'").run();
+        
+        return Response.json({
+          success: true,
+          message: "Cleaned up old test device data from January"
+        }, { headers: corsHeaders });
+      } catch (err) {
+        return Response.json({
+          success: false,
+          error: err.toString()
+        }, { status: 500, headers: corsHeaders });
+      }
     }
 
     if (request.method === "GET" && url.pathname === "/analytics/stats") {
