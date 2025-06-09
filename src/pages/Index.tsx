@@ -1,6 +1,5 @@
 import PaleoTreatsLogo from "@/components/PaleoTreatsLogo";
 import ParkingStatusCard from "@/components/ParkingStatusCard";
-import ParkingLocationInfo from "@/components/ParkingLocationInfo";
 import ParkingAnalytics from "@/components/ParkingAnalytics";
 import useParkingSensor from "@/hooks/useParkingSensor";
 import { Button } from "@/components/ui/button";
@@ -52,7 +51,7 @@ const Index = () => {
           </div>
 
           {/* Controls */}
-          <div className="mb-8 flex gap-4">
+          <div className="mb-12 flex gap-4">
             <Button 
               onClick={handleRefresh}
               disabled={isLoading}
@@ -63,9 +62,6 @@ const Index = () => {
               {isLoading ? "🔄 Refreshing..." : "🔄 Refresh Sensor"}
             </Button>
           </div>
-
-          {/* Parking Location Info */}
-          <ParkingLocationInfo />
 
           {/* Analytics Dashboard */}
           <ParkingAnalytics />
