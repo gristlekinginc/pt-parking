@@ -169,6 +169,18 @@ export default {
       }
     }
 
+    if (request.method === "GET" && url.pathname === "/debug/recent") {
+      // Debug endpoint to see the last 10 entries from both tables
+      const recentLog = await env.DB.prepare("SELECT * FROM parking_status_log ORDER BY timestamp DESC LIMIT 10").all();
+      const latestStatus = await env.DB.prepare("SELECT * FROM latest_parking_status ORDER BY timestamp DESC").all();
+      
+      return Response.json({
+        recent_log_entries: recentLog.results,
+        latest_status_table: latestStatus.results,
+        note: "This shows the 10 most recent entries from parking_status_log and all entries from latest_parking_status"
+      }, { headers: corsHeaders });
+    }
+
     if (request.method === "GET" && url.pathname === "/analytics/stats") {
       try {
         // Get total packets from all time
