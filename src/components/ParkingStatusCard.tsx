@@ -50,7 +50,7 @@ const ParkingStatusCard = ({
               </Badge>
               {deviceName && (
                 <Badge className="bg-white/10 text-white border-white/20 text-xs">
-                  📡 {deviceName.includes('undersurface') ? 'Underground Sensor' : 'Sensor'}
+                  📡 Fleximodo In Ground
                 </Badge>
               )}
             </div>

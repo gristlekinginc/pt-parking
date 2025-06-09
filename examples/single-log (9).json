@@ -1,0 +1,62 @@
+{
+    "phy_payload": {
+        "mhdr": {
+            "m_type": "ConfirmedDataUp",
+            "major": "LoRaWANR1"
+        },
+        "mic": [
+            55,
+            182,
+            0,
+            222
+        ],
+        "payload": {
+            "f_port": 2,
+            "fhdr": {
+                "devaddr": "78000007",
+                "f_cnt": 447,
+                "f_ctrl": {
+                    "ack": false,
+                    "adr": true,
+                    "adr_ack_req": false,
+                    "class_b": false,
+                    "f_opts_len": 0,
+                    "f_pending": false
+                },
+                "f_opts": []
+            },
+            "frm_payload": "00090dff2df400c70000"
+        }
+    },
+    "rx_info": [
+        {
+            "context": "1VE8fw==",
+            "crcStatus": "CRC_OK",
+            "gatewayId": "32dd44d69598fc75",
+            "gwTime": "2025-06-08T23:20:11.039+00:00",
+            "metadata": {
+                "gateway_h3index": "8c29a418c868bff",
+                "gateway_id": "11FwHnBLCeyRL2iSwtdi3LNYi1jKTqa2kG71BXQwSYaLCiwdcG2",
+                "gateway_lat": "32.763279613549365",
+                "gateway_long": "-117.123190934992294",
+                "gateway_name": "thankful-caramel-quail",
+                "network": "helium_iot",
+                "regi": "US915"
+            },
+            "nsTime": "2025-06-08T23:20:11.167967514+00:00",
+            "rssi": -92,
+            "snr": 10.800000190734863,
+            "uplinkId": 56176
+        }
+    ],
+    "tx_info": {
+        "frequency": 905300000,
+        "modulation": {
+            "lora": {
+                "bandwidth": 125000,
+                "codeRate": "CR_4_5",
+                "spreadingFactor": 7
+            }
+        }
+    }
+}

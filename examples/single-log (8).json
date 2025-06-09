@@ -1,0 +1,49 @@
+{
+    "phy_payload": {
+        "mhdr": {
+            "m_type": "UnconfirmedDataDown",
+            "major": "LoRaWANR1"
+        },
+        "mic": [
+            129,
+            175,
+            220,
+            20
+        ],
+        "payload": {
+            "f_port": 80,
+            "fhdr": {
+                "devaddr": "78000007",
+                "f_cnt": 444,
+                "f_ctrl": {
+                    "ack": true,
+                    "adr": true,
+                    "adr_ack_req": false,
+                    "class_b": false,
+                    "f_opts_len": 0,
+                    "f_pending": false
+                },
+                "f_opts": []
+            },
+            "frm_payload": "4671bd11"
+        }
+    },
+    "tx_info": {
+        "context": "1VE8fw==",
+        "frequency": 927500000,
+        "modulation": {
+            "lora": {
+                "bandwidth": 500000,
+                "codeRate": "CR_4_5",
+                "polarizationInversion": true,
+                "spreadingFactor": 7
+            }
+        },
+        "power": 21,
+        "timing": {
+            "delay": {
+                "delay": "1s"
+            }
+        }
+    }
+}
