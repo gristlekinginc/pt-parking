@@ -31,16 +31,16 @@ const useParkingSensor = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  // Smart offline detection - only show offline if sensor hasn't reported for 24+ hours
+  // Smart offline detection - only show offline if sensor hasn't reported for 25+ hours
   const shouldShowOffline = (lastUpdateTime: Date): boolean => {
     const now = new Date();
     const timeDiff = now.getTime() - lastUpdateTime.getTime();
     const hoursWithoutUpdate = timeDiff / (1000 * 60 * 60);
     
-    // Only show offline after 24 hours of no communication
+    // Only show offline after 25 hours of no communication
     // This accounts for the fact that LoRaWAN sensors only send updates
     // when parking status changes (FREE ↔ OCCUPIED), not constant heartbeats
-    return hoursWithoutUpdate >= 24;
+    return hoursWithoutUpdate >= 25;
   };
 
   const fetchSensorData = async () => {
@@ -60,6 +60,21 @@ const useParkingSensor = () => {
         // Use smart offline detection
         const isOffline = shouldShowOffline(lastUpdateTime);
         
+        // Debug logging to troubleshoot offline detection
+        const now = new Date();
+        const timeDiff = now.getTime() - lastUpdateTime.getTime();
+        const hoursWithoutUpdate = timeDiff / (1000 * 60 * 60);
+        
+        console.log('🐛 Debug offline detection:', {
+          rawTimestamp: latestReading.timestamp,
+          parsedLastUpdate: lastUpdateTime.toISOString(),
+          currentTime: now.toISOString(),
+          timeDiffMs: timeDiff,
+          hoursWithoutUpdate: hoursWithoutUpdate.toFixed(2),
+          shouldBeOffline: isOffline,
+          threshold: '25 hours'
+        });
+        
         setParkingData({
           isOccupied: latestReading.status === 'OCCUPIED',
           lastUpdated: lastUpdateTime,
@@ -72,7 +87,8 @@ const useParkingSensor = () => {
           status: latestReading.status, 
           device: latestReading.device_name,
           timestamp: latestReading.timestamp,
-          sensorStatus: isOffline ? 'offline' : 'online'
+          sensorStatus: isOffline ? 'offline' : 'online',
+          hoursWithoutUpdate: hoursWithoutUpdate.toFixed(2)
         });
       } else {
         // No data available
