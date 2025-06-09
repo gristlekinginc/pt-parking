@@ -146,9 +146,18 @@ export default {
     if (request.method === "GET" && url.pathname === "/status") {
       const result = await env.DB.prepare("SELECT * FROM latest_parking_status ORDER BY timestamp DESC").all();
       
-      // Return the actual device data - no masking for now
-      // We can re-add security later once device mapping is clean
-      return Response.json(result.results, { headers: corsHeaders });
+      // Filter for the real device internally, then mask for public response
+      const realDeviceData = result.results.filter((row: any) => row.dev_eui === '474f5350fb070cac');
+      const dataToReturn = realDeviceData.length > 0 ? realDeviceData : result.results;
+      
+      // Mask sensitive device identifiers for public access
+      const maskedResults = dataToReturn.map((row: any) => ({
+        ...row,
+        dev_eui: "paleo-treats-sensor-001", // Friendly public identifier
+        device_name: "Fleximodo In Ground Sensor" // Generic but descriptive name
+      }));
+      
+      return Response.json(maskedResults, { headers: corsHeaders });
     }
 
     if (request.method === "GET" && url.pathname === "/debug/recent") {
