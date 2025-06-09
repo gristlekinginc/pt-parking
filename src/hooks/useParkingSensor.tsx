@@ -31,34 +31,16 @@ const useParkingSensor = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  // Smart offline detection based on business hours and day of week
+  // Smart offline detection - only show offline if sensor hasn't reported for 24+ hours
   const shouldShowOffline = (lastUpdateTime: Date): boolean => {
     const now = new Date();
     const timeDiff = now.getTime() - lastUpdateTime.getTime();
     const hoursWithoutUpdate = timeDiff / (1000 * 60 * 60);
     
-    const currentHour = now.getHours();
-    const currentDay = now.getDay(); // 0 = Sunday, 1 = Monday, etc.
-    
-    // Rule 1: Between 7pm and 10:30am on Tuesday, Wednesday, Friday, Saturday, or Sunday
-    // Days: 0=Sun, 1=Mon, 2=Tue, 3=Wed, 4=Thu, 5=Fri, 6=Sat
-    const overnightDays = [0, 2, 3, 5, 6]; // Sunday, Tuesday, Wednesday, Friday, Saturday
-    const isOvernightPeriod = overnightDays.includes(currentDay) && 
-                             (currentHour >= 19 || currentHour < 10.5); // 7pm-10:30am
-    
-    // Rule 2: Between 1pm and 6:30pm on Monday, Tuesday, Wednesday, or Thursday  
-    const weekdayAfternoonDays = [1, 2, 3, 4]; // Monday, Tuesday, Wednesday, Thursday
-    const isWeekdayAfternoon = weekdayAfternoonDays.includes(currentDay) && 
-                              currentHour >= 13 && currentHour < 18.5; // 1pm-6:30pm
-    
-    // Apply the rules
-    if (isOvernightPeriod || isWeekdayAfternoon) {
-      // During these specific periods, any gap in uplinks means offline
-      return hoursWithoutUpdate > 0.1; // Show offline if no update in last 6 minutes
-    }
-    
-    // Rule 3: Outside those periods, show offline only after 6 hours
-    return hoursWithoutUpdate >= 6;
+    // Only show offline after 24 hours of no communication
+    // This accounts for the fact that LoRaWAN sensors only send updates
+    // when parking status changes (FREE ↔ OCCUPIED), not constant heartbeats
+    return hoursWithoutUpdate >= 24;
   };
 
   const fetchSensorData = async () => {
