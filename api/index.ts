@@ -145,7 +145,28 @@ export default {
 
     if (request.method === "GET" && url.pathname === "/status") {
       const result = await env.DB.prepare("SELECT * FROM latest_parking_status").all();
-      return Response.json(result.results, { headers: corsHeaders });
+      
+      // Check for authentication to access real device identifiers
+      const authHeader = request.headers.get('Authorization');
+      let isAuthenticated = false;
+      
+      if (authHeader && env.WEBHOOK_SECRET) {
+        const token = authHeader.replace('Bearer ', '').replace('webhook-secret ', '');
+        isAuthenticated = token === env.WEBHOOK_SECRET;
+      }
+      
+      if (isAuthenticated) {
+        // Return real data for authenticated requests
+        return Response.json(result.results, { headers: corsHeaders });
+      } else {
+        // Mask sensitive device identifiers for public access
+        const maskedResults = result.results.map((row: any) => ({
+          ...row,
+          dev_eui: "1a2b3c4d5e6f7890", // Anonymized device EUI
+          device_name: "Fleximodo In Ground" // Generic device name
+        }));
+        return Response.json(maskedResults, { headers: corsHeaders });
+      }
     }
 
     if (request.method === "GET" && url.pathname === "/analytics/stats") {
