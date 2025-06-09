@@ -18,8 +18,8 @@ interface ApiResponse {
 
 // Your Cloudflare Workers API URL - works for both development and production
 const API_BASE_URL = window.location.hostname === 'localhost' 
-  ? 'https://pt-parking-api.nik-cda.workers.dev'
-  : 'https://pt-parking-api.nik-cda.workers.dev';
+  ? 'https://pt-parking-api.paleotreats.com'
+  : 'https://pt-parking-api.paleotreats.com';
 
 const useParkingSensor = () => {
   const [parkingData, setParkingData] = useState<ParkingData>({
