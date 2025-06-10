@@ -45,7 +45,14 @@ const useParkingSensor = () => {
 
   const fetchSensorData = async () => {
     try {
-      const response = await fetch(`${API_BASE_URL}/status`);
+      // Add cache-busting for mobile Safari
+      const cacheBuster = Date.now();
+      const response = await fetch(`${API_BASE_URL}/status?t=${cacheBuster}`, {
+        cache: 'no-store', // Prevent browser caching
+        headers: {
+          'Cache-Control': 'no-cache'
+        }
+      });
       
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`);
@@ -115,12 +122,47 @@ const useParkingSensor = () => {
     // Fetch data immediately when component mounts
     fetchSensorData();
 
-    // Set up interval to fetch live data every 30 seconds
+    // Set up 1-minute polling - reasonable for parking status monitoring
+    const pollInterval = 60000; // 1 minute for all devices
+    
     const interval = setInterval(() => {
       fetchSensorData();
-    }, 30000);
+    }, pollInterval);
+    
+    console.log(`📱 Polling setup: ${pollInterval/1000}s interval`);
 
-    return () => clearInterval(interval);
+    // Add mobile-friendly event listeners for better reliability
+    const handleVisibilityChange = () => {
+      if (!document.hidden) {
+        // App came back into focus - immediately fetch fresh data
+        console.log('📱 App came into focus - fetching fresh data');
+        fetchSensorData();
+      }
+    };
+
+    const handleFocus = () => {
+      // Window regained focus - fetch fresh data
+      console.log('📱 Window focus - fetching fresh data');
+      fetchSensorData();
+    };
+
+    const handleOnline = () => {
+      // Network came back - fetch fresh data
+      console.log('📱 Network back online - fetching fresh data');
+      fetchSensorData();
+    };
+
+    // Add event listeners
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    window.addEventListener('focus', handleFocus);
+    window.addEventListener('online', handleOnline);
+
+    return () => {
+      clearInterval(interval);
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+      window.removeEventListener('focus', handleFocus);
+      window.removeEventListener('online', handleOnline);
+    };
   }, []);
 
   // Function to manually refresh sensor data
