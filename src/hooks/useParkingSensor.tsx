@@ -45,14 +45,9 @@ const useParkingSensor = () => {
 
   const fetchSensorData = async () => {
     try {
-      // Add cache-busting for mobile Safari
+      // Simple cache-busting without complex headers
       const cacheBuster = Date.now();
-      const response = await fetch(`${API_BASE_URL}/status?t=${cacheBuster}`, {
-        cache: 'no-store', // Prevent browser caching
-        headers: {
-          'Cache-Control': 'no-cache'
-        }
-      });
+      const response = await fetch(`${API_BASE_URL}/status?v=${cacheBuster}`);
       
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`);
