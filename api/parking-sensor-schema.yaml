@@ -1,0 +1,163 @@
+openapi: 3.0.3
+info:
+  title: Paleo Treats Parking Sensor API
+  description: API for MeteoScientific LoRaWAN parking sensor data
+  version: 1.0.0
+  contact:
+    name: Paleo Treats
+    url: https://parking.paleotreats.com
+
+servers:
+  - url: https://pt-parking-api.paleotreats.com
+    description: Production API
+
+paths:
+  /webhook:
+    post:
+      summary: Receive LoRaWAN sensor data from MeteoScientific
+      description: Webhook endpoint that receives parking sensor status updates
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LoRaWANPayload'
+      responses:
+        '200':
+          description: Webhook data processed successfully
+          content:
+            text/plain:
+              schema:
+                type: string
+                example: "OK"
+        '400':
+          description: Invalid payload format
+        '429':
+          description: Rate limit exceeded
+        '500':
+          description: Database error
+
+  /status:
+    get:
+      summary: Get current parking sensor status
+      description: Public endpoint returning the latest parking spot status
+      responses:
+        '200':
+          description: Current parking status
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/ParkingStatus'
+
+  /analytics/stats:
+    get:
+      summary: Get parking analytics statistics
+      responses:
+        '200':
+          description: Analytics data
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AnalyticsStats'
+
+components:
+  schemas:
+    LoRaWANPayload:
+      type: object
+      required:
+        - deviceInfo
+        - object
+        - time
+      properties:
+        deviceInfo:
+          type: object
+          required:
+            - devEui
+          properties:
+            devEui:
+              type: string
+              pattern: '^[a-fA-F0-9]{16}$'
+              description: Device EUI (16 hex characters)
+            deviceName:
+              type: string
+        object:
+          type: object
+          required:
+            - parkingStatus
+          properties:
+            parkingStatus:
+              type: string
+              enum: [FREE, BUSY, OCCUPIED]
+            statusChanged:
+              type: boolean
+        time:
+          type: string
+          format: date-time
+          description: ISO 8601 timestamp
+        rxInfo:
+          type: array
+          items:
+            type: object
+            properties:
+              rssi:
+                type: integer
+                minimum: -150
+                maximum: 0
+              snr:
+                type: number
+              gatewayId:
+                type: string
+              metadata:
+                type: object
+                properties:
+                  gateway_name:
+                    type: string
+                  gateway_lat:
+                    type: string
+                  gateway_long:
+                    type: string
+                  network:
+                    type: string
+
+    ParkingStatus:
+      type: object
+      properties:
+        dev_eui:
+          type: string
+          description: Masked device identifier
+        device_name:
+          type: string
+        status:
+          type: string
+          enum: [FREE, OCCUPIED]
+        timestamp:
+          type: string
+          format: date-time
+
+    AnalyticsStats:
+      type: object
+      properties:
+        monthlyHours:
+          type: integer
+          minimum: 0
+        peakUsage:
+          type: integer
+          minimum: 0
+          maximum: 100
+        availability:
+          type: integer
+          minimum: 0
+          maximum: 100
+        availabilityNextHour:
+          type: integer
+          minimum: 0
+          maximum: 100
+        totalPackets:
+          type: integer
+          minimum: 0
+        rssi:
+          type: integer
+        snr:
+          type: number 
