@@ -176,6 +176,23 @@ export default {
       }, { headers: corsHeaders });
     }
 
+    if (request.method === "GET" && url.pathname === "/debug/logs") {
+      // View client error logs for debugging mobile issues
+      try {
+        const logs = await env.DB.prepare("SELECT * FROM client_logs ORDER BY timestamp DESC LIMIT 50").all();
+        
+        return Response.json({
+          total_logs: logs.results.length,
+          logs: logs.results,
+          note: "Last 50 client error logs, most recent first"
+        }, { headers: corsHeaders });
+      } catch (err) {
+        return Response.json({
+          error: "Failed to fetch logs: " + err.toString()
+        }, { status: 500, headers: corsHeaders });
+      }
+    }
+
     if (request.method === "POST" && url.pathname === "/admin/cleanup") {
       // Clean up old test data - remove the old FB070CAC entry from January
       try {
