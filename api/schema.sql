@@ -19,3 +19,14 @@ CREATE TABLE IF NOT EXISTS latest_parking_status (
   status TEXT CHECK(status IN ('FREE', 'OCCUPIED')),
   timestamp TEXT
 );
+
+CREATE TABLE IF NOT EXISTS client_logs (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  timestamp TEXT,
+  log_level TEXT CHECK(log_level IN ('ERROR', 'WARN', 'INFO', 'DEBUG')),
+  message TEXT,
+  user_agent TEXT,
+  url TEXT,
+  error_details TEXT,
+  ip_address TEXT
+);

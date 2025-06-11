@@ -31,6 +31,25 @@ const useParkingSensor = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
+  // Logging function to help debug mobile issues
+  const logToServer = async (level: string, message: string, errorDetails?: any) => {
+    try {
+      await fetch(`${API_BASE_URL}/logs`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          level,
+          message,
+          userAgent: navigator.userAgent,
+          url: window.location.href,
+          errorDetails: errorDetails ? JSON.stringify(errorDetails) : ''
+        })
+      });
+    } catch (err) {
+      console.warn('Failed to log to server:', err);
+    }
+  };
+
   // Smart offline detection - only show offline if sensor hasn't reported for 25+ hours
   const shouldShowOffline = (lastUpdateTime: Date): boolean => {
     const now = new Date();
@@ -45,9 +64,11 @@ const useParkingSensor = () => {
 
   const fetchSensorData = async () => {
     try {
-      // Simple cache-busting without complex headers
-      const cacheBuster = Date.now();
-      const response = await fetch(`${API_BASE_URL}/status?v=${cacheBuster}`);
+      console.log('📱 Fetching from:', API_BASE_URL + '/status');
+      const response = await fetch(`${API_BASE_URL}/status`);
+      
+      console.log('📱 Response status:', response.status);
+      console.log('📱 Response ok:', response.ok);
       
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`);
@@ -102,7 +123,19 @@ const useParkingSensor = () => {
         setError('No sensor data available');
       }
     } catch (err) {
-      console.error('Error fetching sensor data:', err);
+      const errorDetails = {
+        error: err,
+        message: err instanceof Error ? err.message : 'Unknown error',
+        stack: err instanceof Error ? err.stack : 'No stack',
+        url: API_BASE_URL + '/status',
+        userAgent: navigator.userAgent
+      };
+      
+      console.error('📱 Detailed fetch error:', errorDetails);
+      
+      // Log to server for debugging mobile issues
+      logToServer('ERROR', 'Failed to fetch sensor data', errorDetails);
+      
       setError(err instanceof Error ? err.message : 'Failed to fetch sensor data');
       setParkingData(prev => ({
         ...prev,

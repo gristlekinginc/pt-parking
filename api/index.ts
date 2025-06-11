@@ -194,6 +194,34 @@ export default {
       }
     }
 
+    if (request.method === "POST" && url.pathname === "/logs") {
+      // Client-side logging endpoint for debugging mobile issues
+      try {
+        const body = await request.json();
+        const clientIP = request.headers.get('CF-Connecting-IP') || 'unknown';
+        
+        await env.DB.prepare(`
+          INSERT INTO client_logs (
+            timestamp, log_level, message, user_agent, url, error_details, ip_address
+          )
+          VALUES (?, ?, ?, ?, ?, ?, ?)
+        `).bind(
+          new Date().toISOString(),
+          body.level || 'INFO',
+          body.message || '',
+          body.userAgent || '',
+          body.url || '',
+          body.errorDetails || '',
+          clientIP
+        ).run();
+
+        return Response.json({ success: true }, { headers: corsHeaders });
+      } catch (err) {
+        console.error('Failed to log client error:', err);
+        return Response.json({ success: false }, { status: 500, headers: corsHeaders });
+      }
+    }
+
     if (request.method === "GET" && url.pathname === "/analytics/stats") {
       try {
         // Get total packets from all time
