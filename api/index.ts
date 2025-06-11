@@ -382,7 +382,13 @@ export default {
           WHERE timestamp > date('now', '-14 days')
         `).first();
 
-        const hasEnoughData = twoWeeksAgo && twoWeeksAgo.count >= 20;
+        const hasEnoughData = twoWeeksAgo && twoWeeksAgo.count >= 50; // Increased threshold for more data before switching
+        
+        console.log('Heatmap debug:', {
+          twoWeeksAgoCount: twoWeeksAgo?.count,
+          hasEnoughData: hasEnoughData,
+          threshold: 50
+        });
 
         interface HeatmapCell {
           day: string;
