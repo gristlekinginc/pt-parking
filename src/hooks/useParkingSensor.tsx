@@ -147,6 +147,12 @@ const useParkingSensor = () => {
   };
 
   useEffect(() => {
+    // Test logging system on app load
+    logToServer('INFO', 'App loaded successfully', { 
+      timestamp: new Date().toISOString(),
+      url: window.location.href 
+    });
+    
     // Fetch data immediately when component mounts
     fetchSensorData();
 
