@@ -364,7 +364,7 @@ export default {
              WHERE CAST(strftime('%H', datetime(timestamp, '-7 hours')) AS INTEGER) = ?
            `).bind(hour).all();
 
-          let occupancyRate = 5; // Default if no data
+                     let occupancyRate = 0; // Default if no data - means never parked during this hour
           
           if (historicalData.results && historicalData.results.length > 0) {
             const occupiedCount = historicalData.results.filter((row: any) => row.status === 'OCCUPIED').length;
@@ -458,7 +458,7 @@ export default {
                 AND strftime('%w', datetime(timestamp, '-7 hours')) = ?
               `).bind(hour, dayIndex.toString()).all();
 
-            let occupancyRate = 15; // Default if no data
+            let occupancyRate = 0; // Default if no data - means never parked during this time
             
             if (historicalData.results && historicalData.results.length > 0) {
               const occupiedCount = historicalData.results.filter((row: any) => row.status === 'OCCUPIED').length;
