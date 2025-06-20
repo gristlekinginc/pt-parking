@@ -353,18 +353,34 @@ export default {
 
     if (request.method === "GET" && url.pathname === "/analytics/hourly") {
       try {
-        // This would need more sophisticated analysis, for now return default pattern
-        const hourlyData = [
-          { hour: '6AM', occupied: 5 },
-          { hour: '8AM', occupied: 25 },
-          { hour: '10AM', occupied: 45 },
-          { hour: '12PM', occupied: 80 },
-          { hour: '2PM', occupied: 70 },
-          { hour: '4PM', occupied: 60 },
-          { hour: '6PM', occupied: 30 },
-          { hour: '8PM', occupied: 15 },
-          { hour: '10PM', occupied: 8 },
-        ];
+        // Calculate real hourly occupancy patterns from historical data
+        const hours = [6, 8, 10, 12, 14, 16, 18, 20, 22]; // 6AM to 10PM
+        const hourlyData: Array<{hour: string, occupied: number}> = [];
+        
+        for (const hour of hours) {
+          // Get historical data for this hour across all days, with timezone conversion
+          const historicalData = await env.DB.prepare(`
+            SELECT status FROM parking_status_log 
+            WHERE CAST(strftime('%H', datetime(timestamp, '-7 hours')) AS INTEGER) = ?
+            AND timestamp > datetime('now', '-28 days')
+          `).bind(hour).all();
+
+          let occupancyRate = 5; // Default if no data
+          
+          if (historicalData.results && historicalData.results.length > 0) {
+            const occupiedCount = historicalData.results.filter((row: any) => row.status === 'OCCUPIED').length;
+            const totalCount = historicalData.results.length;
+            occupancyRate = Math.round((occupiedCount / totalCount) * 100);
+          }
+
+          // Format hour for display
+          const hourLabel = hour === 12 ? '12PM' : hour > 12 ? `${hour-12}PM` : `${hour}AM`;
+          
+          hourlyData.push({
+            hour: hourLabel,
+            occupied: occupancyRate
+          });
+        }
 
         return Response.json(hourlyData, { headers: corsHeaders });
       } catch (err) {
