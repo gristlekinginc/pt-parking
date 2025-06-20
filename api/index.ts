@@ -359,11 +359,10 @@ export default {
         
         for (const hour of hours) {
           // Get historical data for this hour across all days, with timezone conversion
-          const historicalData = await env.DB.prepare(`
-            SELECT status FROM parking_status_log 
-            WHERE CAST(strftime('%H', datetime(timestamp, '-7 hours')) AS INTEGER) = ?
-            AND timestamp > datetime('now', '-28 days')
-          `).bind(hour).all();
+                     const historicalData = await env.DB.prepare(`
+             SELECT status FROM parking_status_log 
+             WHERE CAST(strftime('%H', datetime(timestamp, '-7 hours')) AS INTEGER) = ?
+           `).bind(hour).all();
 
           let occupancyRate = 5; // Default if no data
           
@@ -457,7 +456,6 @@ export default {
                 SELECT status FROM parking_status_log 
                 WHERE CAST(strftime('%H', datetime(timestamp, '-7 hours')) AS INTEGER) = ?
                 AND strftime('%w', datetime(timestamp, '-7 hours')) = ?
-                AND timestamp > datetime('now', '-28 days')
               `).bind(hour, dayIndex.toString()).all();
 
             let occupancyRate = 15; // Default if no data
@@ -542,7 +540,7 @@ export default {
           FROM parking_status_log 
           WHERE status_changed = 1 
           AND status = 'OCCUPIED'
-          AND timestamp > datetime('now', '-28 days')
+
           GROUP BY DATE(timestamp)
         `).all();
 
@@ -584,7 +582,6 @@ export default {
                 WHERE CAST(strftime('%H', datetime(timestamp, '-7 hours')) AS INTEGER) >= ? 
                 AND CAST(strftime('%H', datetime(timestamp, '-7 hours')) AS INTEGER) < ?
                 AND strftime('%w', datetime(timestamp, '-7 hours')) = ?
-                AND timestamp > datetime('now', '-28 days')
               `).bind(startHour, endHour, dayIndex.toString()).all();
 
             let occupancyRate = 50; // Default if no data
