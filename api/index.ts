@@ -377,12 +377,12 @@ export default {
 
     if (request.method === "GET" && url.pathname === "/analytics/weekly") {
       try {
-        // Check if we have at least 2 weeks of data for accurate heatmap
-        const twoWeeksAgo = await env.DB.prepare(`          SELECT COUNT(*) as count FROM parking_status_log 
-          WHERE timestamp > date('now', '-14 days')
+        // Always use real data when available - gets more accurate over time
+        const totalData = await env.DB.prepare(`
+          SELECT COUNT(*) as count FROM parking_status_log 
         `).first();
 
-        const hasEnoughData = twoWeeksAgo && twoWeeksAgo.count >= 50; // Need substantial data before switching to real occupancy patterns
+        const hasEnoughData = totalData && totalData.count >= 10; // Use real data if we have at least 10 records
 
         interface HeatmapCell {
           day: string;
@@ -437,12 +437,12 @@ export default {
             // Get historical data for this specific hour and day combination
             // Convert UTC timestamps to Pacific time (UTC-7 for PDT, UTC-8 for PST)
             // Since we're in June (PDT), use -7 hours
-            const historicalData = await env.DB.prepare(`
-              SELECT status FROM parking_status_log 
-              WHERE CAST(strftime('%H', datetime(timestamp, '-7 hours')) AS INTEGER) = ?
-              AND strftime('%w', datetime(timestamp, '-7 hours')) = ?
-              AND timestamp > date('now', '-4 weeks')
-            `).bind(hour, dayIndex.toString()).all();
+                          const historicalData = await env.DB.prepare(`
+                SELECT status FROM parking_status_log 
+                WHERE CAST(strftime('%H', datetime(timestamp, '-7 hours')) AS INTEGER) = ?
+                AND strftime('%w', datetime(timestamp, '-7 hours')) = ?
+                AND timestamp > datetime('now', '-28 days')
+              `).bind(hour, dayIndex.toString()).all();
 
             let occupancyRate = 15; // Default if no data
             
@@ -474,13 +474,12 @@ export default {
 
     if (request.method === "GET" && url.pathname === "/analytics/best-times") {
       try {
-        // Check if we have at least 2 weeks of data to make accurate recommendations
-        const twoWeeksAgo = await env.DB.prepare(`
+        // Always use real data when available - gets more accurate over time
+        const totalData = await env.DB.prepare(`
           SELECT COUNT(*) as count FROM parking_status_log 
-          WHERE timestamp > date('now', '-14 days')
         `).first();
 
-        const hasEnoughData = twoWeeksAgo && twoWeeksAgo.count >= 20; // Lowered from 50 to 20 data points
+        const hasEnoughData = totalData && totalData.count >= 10; // Use real data if we have at least 10 records
 
         if (!hasEnoughData) {
           // Use business owner knowledge as intelligent defaults
@@ -527,7 +526,7 @@ export default {
           FROM parking_status_log 
           WHERE status_changed = 1 
           AND status = 'OCCUPIED'
-          AND timestamp > date('now', '-14 days')
+          AND timestamp > datetime('now', '-28 days')
           GROUP BY DATE(timestamp)
         `).all();
 
@@ -564,13 +563,13 @@ export default {
             // Get historical data for this 2-hour time slot on this day of week
             // Convert UTC timestamps to Pacific time (UTC-7 for PDT, UTC-8 for PST)
             // Since we're in June (PDT), use -7 hours
-            const historicalData = await env.DB.prepare(`
-              SELECT status FROM parking_status_log 
-              WHERE CAST(strftime('%H', datetime(timestamp, '-7 hours')) AS INTEGER) >= ? 
-              AND CAST(strftime('%H', datetime(timestamp, '-7 hours')) AS INTEGER) < ?
-              AND strftime('%w', datetime(timestamp, '-7 hours')) = ?
-              AND timestamp > date('now', '-4 weeks')
-            `).bind(startHour, endHour, dayIndex.toString()).all();
+                          const historicalData = await env.DB.prepare(`
+                SELECT status FROM parking_status_log 
+                WHERE CAST(strftime('%H', datetime(timestamp, '-7 hours')) AS INTEGER) >= ? 
+                AND CAST(strftime('%H', datetime(timestamp, '-7 hours')) AS INTEGER) < ?
+                AND strftime('%w', datetime(timestamp, '-7 hours')) = ?
+                AND timestamp > datetime('now', '-28 days')
+              `).bind(startHour, endHour, dayIndex.toString()).all();
 
             let occupancyRate = 50; // Default if no data
             
