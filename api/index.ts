@@ -435,11 +435,12 @@ export default {
         for (let dayIndex = 0; dayIndex < 7; dayIndex++) {
           for (let hour = 8; hour <= 20; hour++) { // 8am to 8pm
             // Get historical data for this specific hour and day combination
-            // Convert UTC timestamps to Pacific time (UTC-8) for accurate hour/day matching
+            // Convert UTC timestamps to Pacific time (UTC-7 for PDT, UTC-8 for PST)
+            // Since we're in June (PDT), use -7 hours
             const historicalData = await env.DB.prepare(`
               SELECT status FROM parking_status_log 
-              WHERE CAST(strftime('%H', datetime(timestamp, '-8 hours')) AS INTEGER) = ?
-              AND strftime('%w', datetime(timestamp, '-8 hours')) = ?
+              WHERE CAST(strftime('%H', datetime(timestamp, '-7 hours')) AS INTEGER) = ?
+              AND strftime('%w', datetime(timestamp, '-7 hours')) = ?
               AND timestamp > date('now', '-4 weeks')
             `).bind(hour, dayIndex.toString()).all();
 
@@ -561,12 +562,13 @@ export default {
             const endHour = parseInt(businessHours[i + 1]);
             
             // Get historical data for this 2-hour time slot on this day of week
-            // Convert UTC timestamps to Pacific time (UTC-8) for accurate hour/day matching
+            // Convert UTC timestamps to Pacific time (UTC-7 for PDT, UTC-8 for PST)
+            // Since we're in June (PDT), use -7 hours
             const historicalData = await env.DB.prepare(`
               SELECT status FROM parking_status_log 
-              WHERE CAST(strftime('%H', datetime(timestamp, '-8 hours')) AS INTEGER) >= ? 
-              AND CAST(strftime('%H', datetime(timestamp, '-8 hours')) AS INTEGER) < ?
-              AND strftime('%w', datetime(timestamp, '-8 hours')) = ?
+              WHERE CAST(strftime('%H', datetime(timestamp, '-7 hours')) AS INTEGER) >= ? 
+              AND CAST(strftime('%H', datetime(timestamp, '-7 hours')) AS INTEGER) < ?
+              AND strftime('%w', datetime(timestamp, '-7 hours')) = ?
               AND timestamp > date('now', '-4 weeks')
             `).bind(startHour, endHour, dayIndex.toString()).all();
 
