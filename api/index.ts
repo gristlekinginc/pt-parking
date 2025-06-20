@@ -353,23 +353,42 @@ export default {
 
     if (request.method === "GET" && url.pathname === "/analytics/hourly") {
       try {
-        // Calculate real hourly occupancy patterns from historical data
+                // Calculate real hourly occupancy patterns from historical data - OPTIMIZED
         const hours = [6, 8, 10, 12, 14, 16, 18, 20, 22]; // 6AM to 10PM
-        const hourlyData: Array<{hour: string, occupied: number}> = [];
         
+        // Get ALL data in one query, then process in memory
+        const allHourlyData = await env.DB.prepare(`
+          SELECT 
+            CAST(strftime('%H', datetime(timestamp, '-7 hours')) AS INTEGER) as pdt_hour,
+            status
+          FROM parking_status_log 
+          WHERE CAST(strftime('%H', datetime(timestamp, '-7 hours')) AS INTEGER) IN (6,8,10,12,14,16,18,20,22)
+        `).all();
+        
+        // Group by hour
+        const hourlyStats = new Map<number, {occupied: number, total: number}>();
+        if (allHourlyData.results) {
+          for (const row of allHourlyData.results) {
+            const hour = (row as any).pdt_hour;
+            if (!hourlyStats.has(hour)) {
+              hourlyStats.set(hour, {occupied: 0, total: 0});
+            }
+            const stats = hourlyStats.get(hour)!;
+            stats.total++;
+            if ((row as any).status === 'OCCUPIED') {
+              stats.occupied++;
+            }
+          }
+        }
+        
+        // Build hourly data
+        const hourlyData: Array<{hour: string, occupied: number}> = [];
         for (const hour of hours) {
-          // Get historical data for this hour across all days, with timezone conversion
-                     const historicalData = await env.DB.prepare(`
-             SELECT status FROM parking_status_log 
-             WHERE CAST(strftime('%H', datetime(timestamp, '-7 hours')) AS INTEGER) = ?
-           `).bind(hour).all();
-
-                     let occupancyRate = 0; // Default if no data - means never parked during this hour
+          const stats = hourlyStats.get(hour);
+          let occupancyRate = 0; // Default if no data - means never parked during this hour
           
-          if (historicalData.results && historicalData.results.length > 0) {
-            const occupiedCount = historicalData.results.filter((row: any) => row.status === 'OCCUPIED').length;
-            const totalCount = historicalData.results.length;
-            occupancyRate = Math.round((occupiedCount / totalCount) * 100);
+          if (stats && stats.total > 0) {
+            occupancyRate = Math.round((stats.occupied / stats.total) * 100);
           }
 
           // Format hour for display
@@ -443,27 +462,46 @@ export default {
           return Response.json(defaultHeatmap, { headers: corsHeaders });
         }
 
-        // Calculate real heatmap data from historical data
-        const heatmapData: HeatmapCell[] = [];
+                // Calculate real heatmap data from historical data - OPTIMIZED to use single query
         const days = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
         
+        // Get ALL historical data in one query, then process in memory
+        const allHistoricalData = await env.DB.prepare(`
+          SELECT 
+            CAST(strftime('%H', datetime(timestamp, '-7 hours')) AS INTEGER) as pdt_hour,
+            strftime('%w', datetime(timestamp, '-7 hours')) as pdt_dow,
+            status
+          FROM parking_status_log 
+          WHERE CAST(strftime('%H', datetime(timestamp, '-7 hours')) AS INTEGER) BETWEEN 8 AND 20
+        `).all();
+
+        // Group data by day+hour for fast lookup
+        const dataByTimeSlot = new Map<string, {occupied: number, total: number}>();
+        
+        if (allHistoricalData.results) {
+          for (const row of allHistoricalData.results) {
+            const key = `${row.pdt_dow}-${row.pdt_hour}`;
+            if (!dataByTimeSlot.has(key)) {
+              dataByTimeSlot.set(key, {occupied: 0, total: 0});
+            }
+            const slot = dataByTimeSlot.get(key)!;
+            slot.total++;
+            if (row.status === 'OCCUPIED') {
+              slot.occupied++;
+            }
+          }
+        }
+
+        // Build heatmap data
+        const heatmapData: HeatmapCell[] = [];
         for (let dayIndex = 0; dayIndex < 7; dayIndex++) {
           for (let hour = 8; hour <= 20; hour++) { // 8am to 8pm
-            // Get historical data for this specific hour and day combination
-            // Convert UTC timestamps to Pacific time (UTC-7 for PDT, UTC-8 for PST)
-            // Since we're in June (PDT), use -7 hours
-                          const historicalData = await env.DB.prepare(`
-                SELECT status FROM parking_status_log 
-                WHERE CAST(strftime('%H', datetime(timestamp, '-7 hours')) AS INTEGER) = ?
-                AND strftime('%w', datetime(timestamp, '-7 hours')) = ?
-              `).bind(hour, dayIndex.toString()).all();
-
-            let occupancyRate = 0; // Default if no data - means never parked during this time
+            const key = `${dayIndex}-${hour}`;
+            const slot = dataByTimeSlot.get(key);
             
-            if (historicalData.results && historicalData.results.length > 0) {
-              const occupiedCount = historicalData.results.filter((row: any) => row.status === 'OCCUPIED').length;
-              const totalCount = historicalData.results.length;
-              occupancyRate = Math.round((occupiedCount / totalCount) * 100);
+            let occupancyRate = 0; // Default if no data - means never parked during this time
+            if (slot && slot.total > 0) {
+              occupancyRate = Math.round((slot.occupied / slot.total) * 100);
             }
 
             heatmapData.push({
