@@ -101,7 +101,7 @@ const WeeklyHeatmapChart = () => {
                   {/* Day cells for this hour */}
                   {days.map((day, dayIndex) => {
                     const cell = dataMap.get(`${dayIndex}-${hour}`);
-                    const occupancyRate = cell?.occupancyRate || 5;
+                    const occupancyRate = cell?.occupancyRate ?? 0;
                     
                     return (
                       <div
